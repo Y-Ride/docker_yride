@@ -65,5 +65,5 @@ RUN source /opt/ros/$ROS_DISTRO/setup.bash && colcon test \
 #
 ENTRYPOINT ["bash", "-c", "set -e \
 && source ./install/setup.bash \
-&& ros2 launch ouster_ros sensor.launch.xml \"$@\" \
+&& ros2 launch ouster_ros \"$@\" \
 ", "ros-entrypoint"]

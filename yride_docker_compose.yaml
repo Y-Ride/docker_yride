@@ -34,7 +34,7 @@ services:
   ouster-ros-top:
     <<: *ouster-ros
     container_name: ouster-ros-top
-    command: sensor_hostname:=${SENSOR_HOSTNAME_TOP} viz:=false
+    command: record.launch.xml sensor_hostname:=${SENSOR_HOSTNAME_TOP} bag_file:=test1 viz:=false
 
   # ouster-ros-front:
   #   <<: *ouster-ros
