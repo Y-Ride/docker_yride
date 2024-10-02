@@ -1,0 +1,50 @@
+# version: '2.29.7' # version of docker-compose (run 'docker compose version')
+services:
+  yride:
+    build:
+      context: ${HOME}/docker_yride/ros2_ws
+      dockerfile: Dockerfile
+    image: yride
+    container_name: yride
+  #   ports:
+  #     - "5000:5000"
+  #   environment:
+  #     - FLASK_APP=app.py
+  #     - FLASK_ENV=development
+    volumes:
+      - ${HOME}/docker_yride/ros2_ws:${HOME}/docker_ros2_ws:rw
+  #   depends_on:
+  #     - db
+    networks:
+      - yride-network
+    stdin_open: true  # Allows for interactive terminal
+    tty: true         # Allocates a pseudo-TTY
+
+  # Ouster ROS driver
+  ouster-ros:
+    build:
+      context: ${HOME}/docker_yride/Other_drivers/ouster-ros
+      dockerfile: Dockerfile
+    image: ouster-ros
+    container_name: ouster-ros
+    environment:
+      - DISPLAY=${DISPLAY}  # Pass the DISPLAY variable from the host
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix  # Mount the X11 socket
+    command: sensor_hostname:=169.254.100.170 viz:=false
+    # privileged: true
+    # network_mode: host
+    # volumes:
+    #   - /home/ouster-ros:/home/ouster-ros
+    #   - /home/ouster-ros/ouster-ros:/home/ouster-ros/ouster-ros
+    #   - /home/ouster-ros/ouster-ros/config:/home/ouster-ros/ouster-ros/config
+    # environment:
+    #   - ROS_MASTER_URI=http://localhost:11311
+    #   - ROS_IP=
+    # network_mode: host
+    networks:
+      - yride-network
+      # - host
+networks:
+  yride-network:
+    driver: bridge
