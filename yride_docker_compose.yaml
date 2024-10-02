@@ -13,7 +13,7 @@ x-ouster-ros: &ouster-ros  # <-- Define the anchor here
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
     networks:
-      - yride-network
+      - ros2
 
 services:
   # Y-ride ROS2 workspace
@@ -28,7 +28,7 @@ services:
     stdin_open: true
     tty: true
     networks:
-      - yride-network
+      - ros2
 
   # Using the ouster-ros service
   ouster-ros-top:
@@ -57,5 +57,5 @@ services:
   #   command: sensor_hostname:=${SENSOR_HOSTNAME_RIGHT} viz:=false
 
 networks:
-  yride-network:
+  ros2:
     driver: bridge
