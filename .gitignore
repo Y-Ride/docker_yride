@@ -2,4 +2,10 @@
 ros2_ws/log/
 ros2_ws/build/
 ros2_ws/install/
+
+# Ignore settings that can be modified by the user
 .vscode/
+
+# For now, ignore all bag files
+ros2_ws/ros2_bags/*
+*.json

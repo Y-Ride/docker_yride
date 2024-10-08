@@ -20,7 +20,11 @@ RUN set -xue \
     python3-bloom           \
     python3-colcon-common-extensions \
     ros-${ROS_DISTRO}-rviz2 \
-    iputils-ping 
+    ros-${ROS_DISTRO}-ros2bag \
+    iputils-ping \
+    nano
+
+
 
 # Set up non-root build user
 ARG BUILD_UID=1000
@@ -47,6 +51,10 @@ RUN set -xe \
 && mkdir src \
 && cp -R $OUSTER_ROS_PATH ./src
 
+# The RAW param is thorwing an error. I removed it from the driver_params.yaml file so the following line is no longer necessary.
+# RUN sed -i 's/proc_mask: IMU|PCL|SCAN|IMG|RAW/proc_mask: IMU|PCL|SCAN|IMG/' /var/lib/build/src/ouster-ros/ouster-ros/config/driver_params.yaml
+
+
 
 FROM build-env
 
@@ -65,5 +73,5 @@ RUN source /opt/ros/$ROS_DISTRO/setup.bash && colcon test \
 #
 ENTRYPOINT ["bash", "-c", "set -e \
 && source ./install/setup.bash \
-&& ros2 launch ouster_ros \"$@\" \
+&& \"$@\" \
 ", "ros-entrypoint"]

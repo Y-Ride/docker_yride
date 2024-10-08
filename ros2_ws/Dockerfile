@@ -15,9 +15,13 @@ FROM ros:${ROS_DISTRO}-ros-core
 RUN apt-get update && apt-get install --no-install-recommends -y \
     build-essential \
     git \
+    ros-${ROS_DISTRO}-rviz2 \
+    ros-${ROS_DISTRO}-ros2bag \
+    python3-rospkg          \
     python3-colcon-common-extensions \
     python3-rosdep \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* 
+    
 
 # install nano and pip
 RUN apt-get update && apt-get install -y nano \
@@ -25,7 +29,7 @@ RUN apt-get update && apt-get install -y nano \
     && pip3 install --upgrade pip
 
 # Install Segmentation Libraries
-RUN python3 -m pip install numpy matplotlib ouster-sdk 
+RUN python3 -m pip install numpy matplotlib ouster-sdk
 
 # bootstrap rosdep
 RUN rosdep init && \
@@ -36,7 +40,8 @@ RUN rosdep init && \
 #     ros-humble-desktop \
 #     && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get update && apt-get install ros-humble-gtsam cmake vim tmux -y && echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc 
+# RUN apt-get update && apt-get install ros-humble-gtsam cmake vim tmux -y && echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc 
+RUN apt-get update && apt-get install cmake vim tmux -y && echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc 
 
 # Install Ouster package
 RUN mkdir -p ~/docker_ros2_ws/ && cd ~/docker_ros2_ws/
