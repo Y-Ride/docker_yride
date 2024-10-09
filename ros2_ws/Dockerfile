@@ -1,7 +1,8 @@
 # This is to create a Docker image for the Y-Ride project.
 # Copywrite 2024: Ben Boyack @ Brigham Young University
 
-ARG ROS_DISTRO=humble
+ARG ROS_DISTRO=jazzy
+ARG ROS_DOMAIN_ID=42
 
 FROM ros:${ROS_DISTRO}-ros-core
 
@@ -20,16 +21,18 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     python3-rospkg          \
     python3-colcon-common-extensions \
     python3-rosdep \
+    python3-venv \
+    nano \
     && rm -rf /var/lib/apt/lists/* 
-    
 
-# install nano and pip
-RUN apt-get update && apt-get install -y nano \
-    python3-pip \
-    && pip3 install --upgrade pip
+# Set up a virtual environment for non-apt packages
+RUN python3 -m venv /opt/venv
 
-# Install Segmentation Libraries
-RUN python3 -m pip install numpy matplotlib ouster-sdk
+# Activate the virtual environment and install ouster-sdk via pip
+RUN . /opt/venv/bin/activate && pip install --upgrade pip && pip install ouster-sdk
+
+# Ensure the virtual environment is used by default
+ENV PATH="/opt/venv/bin:$PATH"
 
 # bootstrap rosdep
 RUN rosdep init && \

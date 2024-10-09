@@ -8,10 +8,11 @@ x-ouster-ros: &ouster-ros  # <-- Define the anchor here
       context: ${HOME}/docker_yride/Other_drivers/ouster-ros
       dockerfile: Dockerfile
     image: ouster-ros
-    # environment:
-    #   - DISPLAY=${DISPLAY}
-    # volumes:
-    #   - /tmp/.X11-unix:/tmp/.X11-unix
+    environment:
+      - DISPLAY=${DISPLAY}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /dev/shm:/dev/shm
     network_mode: host
     # ipc: host
 
@@ -25,6 +26,7 @@ services:
     container_name: yride
     volumes:
       - ${HOME}/docker_yride/ros2_ws:${HOME}/docker_ros2_ws:rw
+      - /dev/shm:/dev/shm
     working_dir: ${HOME}/docker_ros2_ws
     stdin_open: true
     tty: true
@@ -41,7 +43,7 @@ services:
       sensor_hostname:=${SENSOR_HOSTNAME_TOP}
       ouster_ns:=ouster_top
       viz:=false
-    # use_system_default_qos:=false
+      use_system_default_qos:=true
     # tail -f /dev/null
     
 

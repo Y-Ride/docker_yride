@@ -1,4 +1,5 @@
-ARG ROS_DISTRO=humble
+ARG ROS_DISTRO=jazzy
+ARG ROS_DOMAIN_ID=42
 
 FROM ros:${ROS_DISTRO}-ros-core AS build-env
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -67,6 +68,7 @@ RUN source /opt/ros/$ROS_DISTRO/setup.bash && colcon build \
 RUN source /opt/ros/$ROS_DISTRO/setup.bash && colcon test \
     --ctest-args tests ouster_ros --rerun-failed --output-on-failure
 
+RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc
 # Entrypoint for running Ouster ros:
 #
 # Usage: docker run --rm -it ouster-ros [sensor.launch parameters ..]
