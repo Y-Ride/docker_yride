@@ -1,0 +1,12 @@
+[submodule "Other_drivers/ouster-ros_submodule"]
+	path = Other_drivers/ouster-ros_submodule
+	url = git@github.com:ouster-lidar/ouster-ros.git
+	branch = ros2
+[submodule "Other_drivers/liio-sam_submodule"]
+	path = Other_drivers/liio-sam_submodule
+	url = git@github.com:TixiaoShan/LIO-SAM.git
+	branch = ros2
+[submodule "Other_drivers/lio-sam_submodule"]
+	path = Other_drivers/lio-sam_submodule
+	url = git@github.com:TixiaoShan/LIO-SAM.git
+	branch = ros2
