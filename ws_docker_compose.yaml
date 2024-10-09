@@ -1,0 +1,18 @@
+services:
+  # Y-ride ROS2 workspace
+  yride:
+    build:
+      context: ${HOME}/docker_yride
+      dockerfile: Dockerfile_ws
+    image: yride_as_one
+    container_name: yride_as_one
+    volumes:
+      - ${HOME}/docker_yride/ros2_ws:${HOME}/docker_ros2_ws:rw
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    environment:
+      - DISPLAY=${DISPLAY}      
+    working_dir: ${HOME}/docker_ros2_ws
+    stdin_open: true
+    tty: true
+    network_mode: host
+    # ipc: host

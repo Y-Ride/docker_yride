@@ -1,11 +1,13 @@
 # This is to create a Docker image for the Y-Ride project.
 # Copywrite 2024: Ben Boyack @ Brigham Young University
 
-ARG ROS_DISTRO=jazzy
+ARG ROS_DISTRO=humble
 
 FROM ros:${ROS_DISTRO}-ros-core
 
-ENV OUSTER_ROS_PATH=${HOME}/docker_yride/Other_drivers/ouster-ros
+ENV OUSTER_HOME=/var/lib/build \
+    DRIVER_BUILD_PATH=/root/driver_ros2_ws \
+    OUSTER_ROS_PATH=/root/driver_ros2_ws/src/ouster-ros
 
 # # nvidia-container-runtime
 # ENV NVIDIA_VISIBLE_DEVICES \
@@ -42,15 +44,19 @@ RUN . /opt/venv/bin/activate && pip install --upgrade pip && pip install ouster-
 # Ensure the virtual environment is used by default
 ENV PATH="/opt/venv/bin:$PATH"
 
-RUN set -xe         \
-&& apt-get update   \
-&& rosdep init      \
-&& rosdep update --rosdistro=$ROS_DISTRO \
-&& rosdep install --from-paths $OUSTER_ROS_PATH -y --ignore-src
 
 # bootstrap rosdep
 RUN rosdep init && \
   rosdep update --rosdistro ${ROS_DISTRO}
+
+# Set up ouster-ros package
+RUN mkdir -p ${OUSTER_ROS_PATH}
+COPY ./Other_drivers/ouster-ros_submodule ${OUSTER_ROS_PATH}
+RUN set -xe         \
+&& apt-get update   \
+&& rosdep install --from-paths ${OUSTER_ROS_PATH} -y --ignore-src
+
+
 
 # install ros2 packages
 # RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -58,21 +64,20 @@ RUN rosdep init && \
 #     && rm -rf /var/lib/apt/lists/*
 
 # RUN apt-get update && apt-get install ros-humble-gtsam cmake vim tmux -y && echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc 
-RUN apt-get update && apt-get install cmake vim tmux -y && echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc 
-
-# Install Ouster package
-# RUN mkdir -p ~/docker_ros2_ws/ && cd ~/docker_ros2_ws/
+RUN apt-get update && apt-get install vim tmux -y && echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc 
 
 SHELL ["/bin/bash", "-c"]
 
-RUN source /opt/ros/$ROS_DISTRO/setup.bash && colcon build \
+RUN cd ${OUSTER_ROS_PATH}
+
+RUN cd ${DRIVER_BUILD_PATH} && colcon build \
     --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_CXX_FLAGS="-Wno-deprecated-declarations"
 
-RUN source /opt/ros/$ROS_DISTRO/setup.bash && colcon test \
+RUN cd ${DRIVER_BUILD_PATH} && colcon test \
     --ctest-args tests ouster_ros --rerun-failed --output-on-failure
 
-RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc
+RUN echo "source ${DRIVER_BUILD_PATH}/install/setup.bash" >> ~/.bashrc
 
 # # Install Nvidia Container Toolkit for GPU support
 # RUN curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
@@ -83,4 +88,4 @@ RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc
 
 # Set the entrypoint to keep the container running
 # Or you can use `["tail", "-f", "/dev/null"]` to keep it running
-CMD ["bash"]  
+ENTRYPOINT ["bash", "-c", "set -e", "ros-entrypoint"] 
