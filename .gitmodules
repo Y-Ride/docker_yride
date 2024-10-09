@@ -3,7 +3,3 @@
 	url = git@github.com:TixiaoShan/LIO-SAM.git
 	branch = ros2
 
-[submodule "Other_drivers/ouster-ros"]
-	path = Other_drivers/ouster-ros
-	url = git@github.com:ouster-lidar/ouster-ros.git
-	branch = ros2
