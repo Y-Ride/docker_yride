@@ -1,5 +1,0 @@
-[submodule "Other_drivers/lio-sam"]
-	path = Other_drivers/lio-sam
-	url = git@github.com:TixiaoShan/LIO-SAM.git
-	branch = ros2
-
