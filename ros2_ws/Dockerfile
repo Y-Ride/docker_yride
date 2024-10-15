@@ -1,8 +1,8 @@
 # This is to create a Docker image for the Y-Ride project.
 # Copywrite 2024: Ben Boyack @ Brigham Young University
 
-ARG ROS_DISTRO=jazzy
-ARG ROS_DOMAIN_ID=42
+ARG ROS_DISTRO=humble
+# ARG ROS_DOMAIN_ID=42
 
 FROM ros:${ROS_DISTRO}-ros-core
 

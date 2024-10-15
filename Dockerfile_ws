@@ -1,91 +1,80 @@
-# This is to create a Docker image for the Y-Ride project.
-# Copywrite 2024: Ben Boyack @ Brigham Young University
+# Other destros may not be supported with all of the packages listed below
+ARG ROS_DISTRO=humble 
 
-ARG ROS_DISTRO=humble
-
+# This is an auto generated Dockerfile for ros:ros-base
+# generated from docker_images_ros2/create_ros_image.Dockerfile.em
 FROM ros:${ROS_DISTRO}-ros-core
 
-ENV OUSTER_HOME=/var/lib/build \
-    DRIVER_BUILD_PATH=/root/driver_ros2_ws \
-    OUSTER_ROS_PATH=/root/driver_ros2_ws/src/ouster-ros
-
-# # nvidia-container-runtime
-# ENV NVIDIA_VISIBLE_DEVICES \
-#     ${NVIDIA_VISIBLE_DEVICES:-all}
-# ENV NVIDIA_DRIVER_CAPABILITIES \
-#     ${NVIDIA_DRIVER_CAPABILITIES:+$NVIDIA_DRIVER_CAPABILITIES,}graphics
+# nvidia-container-runtime
+ENV NVIDIA_VISIBLE_DEVICES \
+    ${NVIDIA_VISIBLE_DEVICES:-all}
+ENV NVIDIA_DRIVER_CAPABILITIES \
+    ${NVIDIA_DRIVER_CAPABILITIES:+$NVIDIA_DRIVER_CAPABILITIES,}graphics
 
 # install bootstrap tools
-RUN set -xue && \
-    apt-get update && \
-    apt-get install --no-install-recommends -y \
+RUN apt-get update && apt-get install --no-install-recommends -y \
     build-essential \
-    cmake \
-    fakeroot \
-    dpkg-dev \
-    debhelper \
     git \
-    ros-${ROS_DISTRO}-rviz2 \
-    ros-${ROS_DISTRO}-ros2bag \
-    python3-rospkg          \
     python3-colcon-common-extensions \
+    python3-colcon-mixin \
     python3-rosdep \
-    python3-venv \
-    iputils-ping \
-    nano \
-    && rm -rf /var/lib/apt/lists/* 
+    python3-vcstool \
+    && rm -rf /var/lib/apt/lists/*
 
-# Set up a virtual environment for non-apt packages
-RUN python3 -m venv /opt/venv
+# install nano and pip
+RUN apt-get update && apt-get install -y nano \
+    python3-pip \
+    && pip3 install --upgrade pip
 
-# Activate the virtual environment and install ouster-sdk via pip
-RUN . /opt/venv/bin/activate && pip install --upgrade pip && pip install ouster-sdk
-
-# Ensure the virtual environment is used by default
-ENV PATH="/opt/venv/bin:$PATH"
-
+# Install Segmentation Libraries
+RUN python3 -m pip install numpy matplotlib opencv-python open3d ouster-sdk 
+# RUN python3 -m pip install torch==1.12.1+cu113 torchvision==0.13.1+cu113 --extra-index-url https://download.pytorch.org/whl/cu113 
+# RUN python3 -m pip install 'git+https://github.com/facebookresearch/detectron2.git'
+# RUN git clone https://github.com/bytedance/kmax-deeplab.git && cd kmax-deeplab && python3 -m pip install -r requirements.txt
 
 # bootstrap rosdep
 RUN rosdep init && \
-  rosdep update --rosdistro ${ROS_DISTRO}
+  rosdep update --rosdistro $ROS_DISTRO
 
-# Set up ouster-ros package
-RUN mkdir -p ${OUSTER_ROS_PATH}
-COPY ./Other_drivers/ouster-ros_submodule ${OUSTER_ROS_PATH}
-RUN set -xe         \
-&& apt-get update   \
-&& rosdep install --from-paths ${OUSTER_ROS_PATH} -y --ignore-src
-
-
+# setup colcon mixin and metadata
+RUN colcon mixin add default \
+      https://raw.githubusercontent.com/colcon/colcon-mixin-repository/master/index.yaml && \
+    colcon mixin update && \
+    colcon metadata add default \
+      https://raw.githubusercontent.com/colcon/colcon-metadata-repository/master/index.yaml && \
+    colcon metadata update
 
 # install ros2 packages
-# RUN apt-get update && apt-get install -y --no-install-recommends \
-#     ros-humble-desktop \
-#     && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ros-${ROS_DISTRO}-desktop \
+    && rm -rf /var/lib/apt/lists/*
 
-# RUN apt-get update && apt-get install ros-humble-gtsam cmake vim tmux -y && echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc 
-RUN apt-get update && apt-get install vim tmux -y && echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc 
+RUN apt-get update && apt-get install ros-${ROS_DISTRO}-gtsam cmake vim tmux -y && echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc 
 
-SHELL ["/bin/bash", "-c"]
+# Install Livox SDK (Needed for Fast LIO-SAM)
+RUN git clone https://github.com/Livox-SDK/Livox-SDK2.git && cd ./Livox-SDK2/ && mkdir build && cd build && cmake .. && make -j && make install
 
-RUN cd ${OUSTER_ROS_PATH}
+# Install ros2 driver for Livox SDK 
+RUN git clone https://github.com/Livox-SDK/livox_ros_driver2.git ws_livox/src/livox_ros_driver2 && . /opt/ros/${ROS_DISTRO}/setup.sh && cd ws_livox/src/livox_ros_driver2 && ./build.sh ${ROS_DISTRO} && echo "source /ws_livox/install/setup.bash" >> ~/.bashrc
 
-RUN cd ${DRIVER_BUILD_PATH} && colcon build \
-    --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_CXX_FLAGS="-Wno-deprecated-declarations"
+# Install Fast-LIO and Ouster package
+RUN mkdir -p docker_ros2_ws/src && cd docker_ros2_ws/src && \
+  git clone -b ros2 --recurse-submodules https://github.com/ouster-lidar/ouster-ros.git && \
+  git clone https://github.com/BYU-FRoSt-Lab/FAST_LIO.git --recursive && cd FAST_LIO && \
+  git checkout ROS2 && git pull && cd ../.. && . /ws_livox/install/setup.sh && \
+  rosdep install --from-paths src --ignore-src -y && colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release \
+  && echo "source /docker_ros2_ws/install/setup.bash" >> ~/.bashrc
 
-RUN cd ${DRIVER_BUILD_PATH} && colcon test \
-    --ctest-args tests ouster_ros --rerun-failed --output-on-failure
-
-RUN echo "source ${DRIVER_BUILD_PATH}/install/setup.bash" >> ~/.bashrc
-
-# # Install Nvidia Container Toolkit for GPU support
-# RUN curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
-#   && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
-#     sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
-#     sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list && apt-get update && apt-get install -y nvidia-container-toolkit
+# The RAW param is thorwing an error. 
+RUN cd docker_ros2_ws/src/ouster-ros/ouster-ros/config/ && \
+  sed -i 's/proc_mask: IMU|PCL|SCAN|IMG|RAW/proc_mask: IMU|PCL|SCAN|IMG/' driver_params.yaml && \
+  sed -i 's/use_system_default_qos: false/use_system_default_qos: true/' driver_params.yaml
 
 
-# Set the entrypoint to keep the container running
-# Or you can use `["tail", "-f", "/dev/null"]` to keep it running
-ENTRYPOINT ["bash", "-c", "set -e", "ros-entrypoint"] 
+# Install ros2 IMU + LUCID Camera + Velodyne
+RUN apt-get update && apt-get install ros-${ROS_DISTRO}-microstrain-inertial-driver ros-${ROS_DISTRO}-microstrain-inertial-rqt -y
+
+RUN curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
+  && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+    sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+    sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list && apt-get update && apt-get install -y nvidia-container-toolkit

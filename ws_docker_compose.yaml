@@ -1,11 +1,12 @@
 services:
   # Y-ride ROS2 workspace
-  yride:
+  yride_all_together:
     build:
       context: ${HOME}/docker_yride
       dockerfile: Dockerfile_ws
-    image: yride_as_one
-    container_name: yride_as_one
+    # image: yride_all_together
+    image: everything_in_one_test
+    container_name: yride_all_together
     volumes:
       - ${HOME}/docker_yride/ros2_ws:${HOME}/docker_ros2_ws:rw
       - /tmp/.X11-unix:/tmp/.X11-unix

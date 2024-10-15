@@ -7,5 +7,5 @@ ros2_ws/install/
 .vscode/
 
 # For now, ignore all bag files
-ros2_ws/ros2_bags/*
+ros2_ws/bags/*
 *.json

@@ -13,8 +13,11 @@ x-ouster-ros: &ouster-ros  # <-- Define the anchor here
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
       - /dev/shm:/dev/shm
-    network_mode: host
+    # network_mode: host
     # ipc: host
+    networks:
+      - ros2
+    privileged: true
 
 services:
   # Y-ride ROS2 workspace
@@ -30,21 +33,27 @@ services:
     working_dir: ${HOME}/docker_ros2_ws
     stdin_open: true
     tty: true
-    network_mode: host
+    # network_mode: host
     # ipc: host
+    networks:
+      - ros2
 
   # Using the ouster-ros service
   ouster-ros-top:
     <<: *ouster-ros
     container_name: ouster-ros-top
     command: > # List parameters to be passed to the launch file
-      ros2 launch ouster_ros
-      sensor.launch.xml
-      sensor_hostname:=${SENSOR_HOSTNAME_TOP}
-      ouster_ns:=ouster_top
-      viz:=false
-      use_system_default_qos:=true
+      tail -f /dev/null
+    # ros2 launch ouster_ros
+    # sensor.launch.xml
+    # sensor_hostname:=${SENSOR_HOSTNAME_TOP}
+    # ouster_ns:=ouster_top
+    # viz:=false
+    # use_system_default_qos:=true
     # tail -f /dev/null
+    ports:
+      - 7502:7502/udp
+      - 7503:7503/udp
     
 
   # ouster-ros-front:
@@ -67,6 +76,5 @@ services:
   #   container_name: ouster-ros-right
   #   command: sensor_hostname:=${SENSOR_HOSTNAME_RIGHT} viz:=false
 
-# networks:
-#   ros2:
-#     driver: bridge
+networks:
+  ros2:
