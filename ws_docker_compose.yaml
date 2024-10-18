@@ -4,15 +4,14 @@ services:
     build:
       context: ${HOME}/docker_yride
       dockerfile: Dockerfile_ws
-    # image: yride_all_together
-    image: everything_in_one_test
+    image: yride_all_together
     container_name: yride_all_together
     volumes:
-      - ${HOME}/docker_yride/ros2_ws:${HOME}/docker_ros2_ws:rw
+      - ${HOME}/docker_yride/ros2_ws:/docker_yride/yride_ros2_ws:rw
       - /tmp/.X11-unix:/tmp/.X11-unix
     environment:
       - DISPLAY=${DISPLAY}      
-    working_dir: ${HOME}/docker_ros2_ws
+    working_dir: ~/docker_yride/yride_ros2_ws
     stdin_open: true
     tty: true
     network_mode: host

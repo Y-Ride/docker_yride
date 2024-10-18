@@ -1,0 +1,1 @@
+ros2 launch ouster_ros sensor.launch.xml sensor_hostname:=169.254.100.170 viz:=true

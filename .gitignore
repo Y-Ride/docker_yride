@@ -6,6 +6,7 @@ ros2_ws/install/
 # Ignore settings that can be modified by the user
 .vscode/
 
-# For now, ignore all bag files
+# Bag files are too large for github.
+# If they need to be shared, upload to box and share the link.
 ros2_ws/bags/*
 *.json
