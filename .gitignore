@@ -8,5 +8,5 @@ ros2_ws/install/
 
 # Bag files are too large for github.
 # If they need to be shared, upload to box and share the link.
-ros2_ws/bags/*
+ros2_ws/bags/
 *.json
