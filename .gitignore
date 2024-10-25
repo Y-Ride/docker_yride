@@ -5,3 +5,5 @@ ros2_ws/install/
 .vscode/
 Other_drivers/ouster_ros
 ros2_ws/ros2_bags
+ros2_ws/bags/
+ros2_ws/src/
