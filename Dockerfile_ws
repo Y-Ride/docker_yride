@@ -90,7 +90,7 @@ RUN mkdir -p /docker_yride/other_drivers_ros2_ws/src && \
     # rosdep install --from-paths src --ignore-src -y && 
     colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release && \
     echo "source /docker_yride/other_drivers_ros2_ws/install/setup.bash" >> ~/.bashrc
-# ADD liosam_params.yaml params.yaml
+# ADD ros2_ws/liosam_params.yaml params.yaml
 # RUN mv params.yaml /docker_yride/other_drivers_ros2_ws/src/LIO-SAM/config/params.yaml
 
 
