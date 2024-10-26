@@ -6,12 +6,22 @@ services:
       dockerfile: Dockerfile_ws
     image: yride_all_together
     container_name: yride_all_together
+    # environment:
+    #   # Set host 
+    #   MY_ENV_VAR: value1
+    #   ANOTHER_ENV_VAR: value2
     volumes:
       - ${HOME}/docker_yride/ros2_ws:/docker_yride/yride_ros2_ws:rw
       - /tmp/.X11-unix:/tmp/.X11-unix
       - ${HOME}/docker_yride/ros2_ws/liosam_params.yaml:/docker_yride/other_drivers_ros2_ws/src/LIO-SAM/config/params.yaml:rw
     environment:
-      - DISPLAY=${DISPLAY}      
+      DISPLAY: ${DISPLAY}    
+      # set up sensor hostname IPv4 address
+      SENSOR_HOSTNAME_TOP: ${SENSOR_HOSTNAME_TOP}
+      SENSOR_HOSTNAME_FRONT: ${SENSOR_HOSTNAME_FRONT}
+      SENSOR_HOSTNAME_RIGHT: ${SENSOR_HOSTNAME_RIGHT}
+      SENSOR_HOSTNAME_LEFT: ${SENSOR_HOSTNAME_LEFT}
+      SENSOR_HOSTNAME_BACK: ${SENSOR_HOSTNAME_BACK}
     working_dir: /docker_yride/yride_ros2_ws
     stdin_open: true
     tty: true

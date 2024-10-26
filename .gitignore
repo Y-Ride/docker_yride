@@ -3,12 +3,14 @@ ros2_ws/log/
 ros2_ws/build/
 ros2_ws/install/
 
-
-
 # Ignore settings that can be modified by the user
 .vscode/
 
 # Bag files are too large for github.
 # If they need to be shared, upload to box and share the link.
-ros2_ws/bags/
+ros2_ws/bags/humble/
+ros2_ws/bags/jazzy/
 *.json
+
+# Ignore sensor logs
+ros2_ws/log_ouster/
