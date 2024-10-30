@@ -17,8 +17,6 @@ if [ ! -d "$LOG_DIR" ]; then
 fi
 
 # Variables common to all sensors
-USE_SYSTEM_DEFAULT_QOS=true
-METADATA_FILE_PATH="$SCRIPT_DIR/log_ouster/metadata/"
     # Retrieve the primary link-local IP address in the 169.254.x.x range 
     # *** This is the IP address of the host machine. DOUBLE CHECK! ***
 # Retrieve the primary link-local IP address in the 169.254.x.x range
@@ -26,13 +24,21 @@ METADATA_FILE_PATH="$SCRIPT_DIR/log_ouster/metadata/"
 UDP_ADDRESS=169.254.219.81
 echo "UDP address: $UDP_ADDRESS"
 
+USE_SYSTEM_DEFAULT_QOS=true
+
+METADATA_FILE_PATH="$SCRIPT_DIR/log_ouster/metadata"
+if [ ! -d "$METADATA_FILE_PATH" ]; then
+    mkdir "$METADATA_FILE_PATH"
+    echo "Created metadata directory: $METADATA_FILE_PATH"
+fi
+
 # Launch the sensors and redirect outputs to log files
 # Top 
 ros2 launch ouster_ros sensor.launch.xml \
     sensor_hostname:=${SENSOR_HOSTNAME_TOP} \
     udp_dest:=${UDP_ADDRESS} \
     use_system_default_qos:=${USE_SYSTEM_DEFAULT_QOS} \
-    metadata:="$METADATA_FILE_PATH" \
+    metadata:="$METADATA_FILE_PATH/top_lidar.json" \
     viz:=true \
     ouster_ns:="ouster_top" \
     min_range:="2.0" \
@@ -43,7 +49,7 @@ ros2 launch ouster_ros sensor.launch.xml \
     sensor_hostname:=${SENSOR_HOSTNAME_FRONT} \
     udp_dest:=$UDP_ADDRESS \
     use_system_default_qos:=${USE_SYSTEM_DEFAULT_QOS} \
-    metadata:="$METADATA_FILE_PATH" \
+    metadata:="$METADATA_FILE_PATH/front_lidar.json" \
     viz:=false \
     ouster_ns:="ouster_front" \
     azimuth_window_start:="45000" \
@@ -55,7 +61,7 @@ ros2 launch ouster_ros sensor.launch.xml \
     sensor_hostname:=${SENSOR_HOSTNAME_RIGHT} \
     udp_dest:=$UDP_ADDRESS \
     use_system_default_qos:=${USE_SYSTEM_DEFAULT_QOS} \
-    metadata:="$METADATA_FILE_PATH" \
+    metadata:="$METADATA_FILE_PATH/right_lidar.json" \
     viz:=false \
     ouster_ns:="ouster_right" \
     azimuth_window_start:="135000" \
@@ -67,7 +73,7 @@ ros2 launch ouster_ros sensor.launch.xml \
     sensor_hostname:=${SENSOR_HOSTNAME_LEFT} \
     udp_dest:=$UDP_ADDRESS \
     use_system_default_qos:=${USE_SYSTEM_DEFAULT_QOS} \
-    metadata:="$METADATA_FILE_PATH" \
+    metadata:="$METADATA_FILE_PATH/left_lidar.json" \
     viz:=false \
     ouster_ns:="ouster_left" \
     azimuth_window_start:="45000" \
@@ -79,7 +85,7 @@ ros2 launch ouster_ros sensor.launch.xml \
     sensor_hostname:=${SENSOR_HOSTNAME_BACK} \
     udp_dest:=$UDP_ADDRESS \
     use_system_default_qos:=${USE_SYSTEM_DEFAULT_QOS} \
-    metadata:="$METADATA_FILE_PATH" \
+    metadata:="$METADATA_FILE_PATH/back_lidar.json" \
     viz:=false \
     ouster_ns:="ouster_back" \
     azimuth_window_start:="135000" \
