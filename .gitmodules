@@ -10,3 +10,6 @@
 	path = Other_drivers/lio-sam_submodule
 	url = git@github.com:TixiaoShan/LIO-SAM.git
 	branch = ros2
+[submodule "Other_drivers/multi_lica_submodule"]
+	path = Other_drivers/multi_lica_submodule
+	url = git@github.com:TUMFTM/Multi_LiCa.git
