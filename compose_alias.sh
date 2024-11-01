@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Allow xhost access to the container
-xhost +local:docker
+# xhost +local:docker
 
 COMPOSE_FILE=*compose.yaml
 
