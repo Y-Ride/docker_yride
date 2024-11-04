@@ -22,7 +22,7 @@ services:
       SENSOR_HOSTNAME_RIGHT: ${SENSOR_HOSTNAME_RIGHT}
       SENSOR_HOSTNAME_LEFT: ${SENSOR_HOSTNAME_LEFT}
       SENSOR_HOSTNAME_BACK: ${SENSOR_HOSTNAME_BACK}
-      ROS_DOMAIN_ID: 0
+      ROS_DOMAIN_ID: 1
     working_dir: /docker_yride/yride_ros2_ws
     stdin_open: true
     tty: true
