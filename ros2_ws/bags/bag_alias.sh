@@ -1,11 +1,12 @@
 #!/bin/bash
 
 # Define environment variables for topics
-export OUSTER_FRONT_TOPICS="/ouster_front/points /ouster_front/imu"
-export OUSTER_RIGHT_TOPICS="/ouster_right/points /ouster_right/imu"
-export OUSTER_LEFT_TOPICS="/ouster_left/points /ouster_left/imu"
-export OUSTER_TOP_TOPICS="/ouster_top/points /ouster_top/imu"
-export OUSTER_BACK_TOPICS="/ouster_back/points /ouster_back/imu"
+export OUSTER_TOP_TOPICS="/ouster_top/points /ouster_top/imu /ouster_top/metadata"
+export OUSTER_FRONT_TOPICS="/ouster_front/points /ouster_front/imu /ouster_front/metadata"
+export OUSTER_RIGHT_TOPICS="/ouster_right/points /ouster_right/imu /ouster_right/metadata"
+export OUSTER_LEFT_TOPICS="/ouster_left/points /ouster_left/imu /ouster_left/metadata"
+export OUSTER_BACK_TOPICS="/ouster_back/points /ouster_back/imu /ouster_back/metadata"
+export OTHER_TOPICS="/tf_static"
 
 # Function to record topics based on flags
 record_bag() {
@@ -48,13 +49,18 @@ record_bag() {
 
     # If -a is specified, record all topics
     if [[ " ${@} " =~ " -a " ]]; then
-        topics=($OUSTER_FRONT_TOPICS $OUSTER_RIGHT_TOPICS $OUSTER_LEFT_TOPICS $OUSTER_TOP_TOPICS $OUSTER_BACK_TOPICS)
+        topics=($OUSTER_FRONT_TOPICS $OUSTER_RIGHT_TOPICS $OUSTER_LEFT_TOPICS $OUSTER_TOP_TOPICS $OUSTER_BACK_TOPICS $OTHER_TOPICS)
     fi
 
     # If no topics are selected, print usage
     if [ ${#topics[@]} -eq 0 ]; then
         echo "Usage: bag [-f] [-r] [-l] [-t] [-b] [-a] [-o file_path]"
         return 1
+    fi
+
+    # Add other_topics to topics if it's not empty
+    if [ -n "$OTHER_TOPICS" ]; then
+        topics+=($OTHER_TOPICS)
     fi
 
     # Construct the ros2 bag record command
@@ -67,8 +73,8 @@ record_bag() {
 
     echo "Executing: $command"
     
-    # Execute the command
-    # eval $command
+    # Execute the command directly
+    ${command[@]}
 }
 
 # Allow the function to be called directly

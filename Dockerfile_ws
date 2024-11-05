@@ -107,3 +107,22 @@ RUN curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --
   && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
     sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
     sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list && apt-get update && apt-get install -y nvidia-container-toolkit
+
+###########################################################################################################
+#                                        Do this Last                                                     #
+###########################################################################################################
+# Changes ownership of the container to the host user so that files created in the
+# container are owned by the host user. This is necessary for the host user to be able to
+# delete or modify files created in the container after the container has stopped.
+# Define build arguments for UID and GID (Set in docker_compose.yml)
+# Following arguments are passed from docker_compose.yml
+ARG UID 
+ARG GID
+ARG UNAME
+
+# Create group and user with provided UID and GID
+RUN groupadd -g $GID $UNAME && \
+    useradd -m -u $UID -g $GID -s /bin/bash $UNAME
+
+# Run container as the newly created user
+USER $UNAME

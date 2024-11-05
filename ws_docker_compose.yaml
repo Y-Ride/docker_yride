@@ -4,12 +4,13 @@ services:
     build:
       context: ${HOME}/docker_yride
       dockerfile: Dockerfile_ws
+      args:
+        UID: "${UID:-$(id -u)}"
+        GID: "${GID:-$(id -g)}"
+        UNAME: "docker"
     image: yride_all_together
     container_name: yride_all_together
-    # environment:
-    #   # Set host 
-    #   MY_ENV_VAR: value1
-    #   ANOTHER_ENV_VAR: value2
+    user: "${UID}:${GID}"
     volumes:
       - ${HOME}/docker_yride/ros2_ws:/docker_yride/yride_ros2_ws:rw
       - /tmp/.X11-unix:/tmp/.X11-unix
@@ -23,6 +24,7 @@ services:
       SENSOR_HOSTNAME_LEFT: ${SENSOR_HOSTNAME_LEFT}
       SENSOR_HOSTNAME_BACK: ${SENSOR_HOSTNAME_BACK}
       ROS_DOMAIN_ID: 1
+      LS_COLORS: 'di=1;34:fi=0:ln=1;36:pi=1;33:so=1;35:bd=1;33:cd=1;33:or=1;31:mi=1;31:ex=1;32'
     working_dir: /docker_yride/yride_ros2_ws
     stdin_open: true
     tty: true

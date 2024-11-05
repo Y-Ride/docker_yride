@@ -9,6 +9,22 @@ if [ "$(pwd)" != "$SCRIPT_DIR" ]; then
     exit 1
 fi
 
+## NOTE: The xhost is not available in the container
+# # Check if the xhost command is available
+# if ! command -v xhost &> /dev/null; then
+#     # Allow xhost access to the container
+#     xhost +local:docker
+
+#     # Define cleanup function
+#     cleanup() {
+#         echo "Cleaning up..."
+#         xhost -local:docker
+#     }
+
+#     # Set up trap to call cleanup on exit or interrupt
+#     trap cleanup EXIT
+# fi
+
 # Create the log_ouster directory if it doesn't exist
 LOG_DIR="$SCRIPT_DIR/log_ouster"
 if [ ! -d "$LOG_DIR" ]; then
@@ -39,7 +55,7 @@ ros2 launch ouster_ros sensor.launch.xml \
     udp_dest:=${UDP_ADDRESS} \
     use_system_default_qos:=${USE_SYSTEM_DEFAULT_QOS} \
     metadata:="$METADATA_FILE_PATH/top_lidar.json" \
-    viz:=true \
+    viz:=false \
     ouster_ns:="ouster_top" \
     sensor_frame:="os_sensor_top" \
     lidar_frame:="os_lidar_top" \
@@ -47,41 +63,50 @@ ros2 launch ouster_ros sensor.launch.xml \
     min_range:="0.0" \
     > "$LOG_DIR/ouster_top.log" 2>&1 &
 
-# # Front
-# ros2 launch ouster_ros sensor.launch.xml \
-#     sensor_hostname:=${SENSOR_HOSTNAME_FRONT} \
-#     udp_dest:=$UDP_ADDRESS \
-#     use_system_default_qos:=${USE_SYSTEM_DEFAULT_QOS} \
-#     metadata:="$METADATA_FILE_PATH/front_lidar.json" \
-#     viz:=false \
-#     ouster_ns:="ouster_front" \
-#     azimuth_window_start:="45000" \
-#     azimuth_window_end:="225000" \
-#     > "$LOG_DIR/ouster_front.log" 2>&1 &
+# Front
+ros2 launch ouster_ros sensor.launch.xml \
+    sensor_hostname:=${SENSOR_HOSTNAME_FRONT} \
+    udp_dest:=${UDP_ADDRESS} \
+    use_system_default_qos:=${USE_SYSTEM_DEFAULT_QOS} \
+    metadata:="$METADATA_FILE_PATH/front_lidar.json" \
+    viz:=false \
+    ouster_ns:="ouster_front" \
+    sensor_frame:="os_sensor_front" \
+    lidar_frame:="os_lidar_front" \
+    imu_frame:="os_imu_front" \
+    azimuth_window_start:="45000" \
+    azimuth_window_end:="225000" \
+    > "$LOG_DIR/ouster_front.log" 2>&1 &
 
-# # Right
-# ros2 launch ouster_ros sensor.launch.xml \
-#     sensor_hostname:=${SENSOR_HOSTNAME_RIGHT} \
-#     udp_dest:=$UDP_ADDRESS \
-#     use_system_default_qos:=${USE_SYSTEM_DEFAULT_QOS} \
-#     metadata:="$METADATA_FILE_PATH/right_lidar.json" \
-#     viz:=false \
-#     ouster_ns:="ouster_right" \
-#     azimuth_window_start:="135000" \
-#     azimuth_window_end:="315000" \
-#     > "$LOG_DIR/ouster_right.log" 2>&1 &
+# Right
+ros2 launch ouster_ros sensor.launch.xml \
+    sensor_hostname:=${SENSOR_HOSTNAME_RIGHT} \
+    udp_dest:=${UDP_ADDRESS} \
+    use_system_default_qos:=${USE_SYSTEM_DEFAULT_QOS} \
+    metadata:="$METADATA_FILE_PATH/right_lidar.json" \
+    viz:=false \
+    ouster_ns:="ouster_right" \
+    sensor_frame:="os_sensor_right" \
+    lidar_frame:="os_lidar_right" \
+    imu_frame:="os_imu_right" \
+    azimuth_window_start:="135000" \
+    azimuth_window_end:="315000" \
+    > "$LOG_DIR/ouster_right.log" 2>&1 &
 
-# # Left
-# ros2 launch ouster_ros sensor.launch.xml \
-#     sensor_hostname:=${SENSOR_HOSTNAME_LEFT} \
-#     udp_dest:=$UDP_ADDRESS \
-#     use_system_default_qos:=${USE_SYSTEM_DEFAULT_QOS} \
-#     metadata:="$METADATA_FILE_PATH/left_lidar.json" \
-#     viz:=false \
-#     ouster_ns:="ouster_left" \
-#     azimuth_window_start:="45000" \
-#     azimuth_window_end:="225000" \
-#     > "$LOG_DIR/ouster_left.log" 2>&1 &
+# Left
+ros2 launch ouster_ros sensor.launch.xml \
+    sensor_hostname:=${SENSOR_HOSTNAME_LEFT} \
+    udp_dest:=${UDP_ADDRESS} \
+    use_system_default_qos:=${USE_SYSTEM_DEFAULT_QOS} \
+    metadata:="$METADATA_FILE_PATH/left_lidar.json" \
+    viz:=false \
+    ouster_ns:="ouster_left" \
+    sensor_frame:="os_sensor_left" \
+    lidar_frame:="os_lidar_left" \
+    imu_frame:="os_imu_left" \
+    azimuth_window_start:="45000" \
+    azimuth_window_end:="225000" \
+    > "$LOG_DIR/ouster_left.log" 2>&1 &
 
 # Back
 ros2 launch ouster_ros sensor.launch.xml \
@@ -99,6 +124,16 @@ ros2 launch ouster_ros sensor.launch.xml \
     > "$LOG_DIR/ouster_back.log" 2>&1 &
 
 echo "Sensors launched. Output is in $LOG_DIR/"
+
+## NOTE: No point to source since script occupies terminal until sensors are stopped
+# # Source the bag_alias.sh script to use the record_bag function
+# if [ -f "$SCRIPT_DIR/bags/bag_alias.sh" ]; then
+#     echo "Sourcing bags/bag_alias.sh"
+#     source "$SCRIPT_DIR/bags/bag_alias.sh"
+# else
+#     echo "Error: bags/bag_alias.sh not found."
+# fi
+
 echo "Press Ctrl+C to stop the sensors"
 
 wait
