@@ -126,3 +126,7 @@ RUN groupadd -g $GID $UNAME && \
 
 # Run container as the newly created user
 USER $UNAME
+
+RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc && \
+    echo "source /docker_yride/other_drivers_ros2_ws/install/setup.bash" >> ~/.bashrc && \
+    echo "source /ws_livox/install/setup.bash" >> ~/.bashrc
