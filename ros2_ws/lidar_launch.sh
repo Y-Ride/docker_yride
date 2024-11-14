@@ -9,6 +9,17 @@ if [ "$(pwd)" != "$SCRIPT_DIR" ]; then
     exit 1
 fi
 
+# Define flags
+viz_flag=false
+
+# Get flags
+while getopts "v" opt; do
+    case "$opt" in
+        v) viz_flag=true ;;
+        ?) echo "Usage: $0 [-v]" ; exit 1 ;;
+    esac
+done
+
 ## NOTE: The xhost is not available in the container
 # # Check if the xhost command is available
 # if ! command -v xhost &> /dev/null; then
@@ -55,7 +66,7 @@ ros2 launch ouster_ros sensor.launch.xml \
     udp_dest:=${UDP_ADDRESS} \
     use_system_default_qos:=${USE_SYSTEM_DEFAULT_QOS} \
     metadata:="$METADATA_FILE_PATH/top_lidar.json" \
-    viz:=false \
+    viz:=$viz_flag \
     ouster_ns:="ouster_top" \
     sensor_frame:="os_sensor_top" \
     lidar_frame:="os_lidar_top" \
