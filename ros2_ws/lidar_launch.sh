@@ -52,6 +52,7 @@ UDP_ADDRESS=169.254.219.81
 echo "UDP address: $UDP_ADDRESS"
 
 USE_SYSTEM_DEFAULT_QOS=true
+SET_LIDAR_PERSIST=false
 
 METADATA_FILE_PATH="$SCRIPT_DIR/log_ouster/metadata"
 if [ ! -d "$METADATA_FILE_PATH" ]; then
@@ -71,7 +72,8 @@ ros2 launch ouster_ros sensor.launch.xml \
     sensor_frame:="os_sensor_top" \
     lidar_frame:="os_lidar_top" \
     imu_frame:="os_imu_top" \
-    min_range:="0.0" \
+    min_range:="2.0" \
+    persist_config:=${SET_LIDAR_PERSIST} \
     > "$LOG_DIR/ouster_top.log" 2>&1 &
 
 # Front
@@ -87,6 +89,7 @@ ros2 launch ouster_ros sensor.launch.xml \
     imu_frame:="os_imu_front" \
     azimuth_window_start:="45000" \
     azimuth_window_end:="225000" \
+    persist_config:=${SET_LIDAR_PERSIST} \
     > "$LOG_DIR/ouster_front.log" 2>&1 &
 
 # Right
@@ -102,6 +105,7 @@ ros2 launch ouster_ros sensor.launch.xml \
     imu_frame:="os_imu_right" \
     azimuth_window_start:="135000" \
     azimuth_window_end:="315000" \
+    persist_config:=${SET_LIDAR_PERSIST} \
     > "$LOG_DIR/ouster_right.log" 2>&1 &
 
 # Left
@@ -117,6 +121,7 @@ ros2 launch ouster_ros sensor.launch.xml \
     imu_frame:="os_imu_left" \
     azimuth_window_start:="45000" \
     azimuth_window_end:="225000" \
+    persist_config:=${SET_LIDAR_PERSIST} \
     > "$LOG_DIR/ouster_left.log" 2>&1 &
 
 # Back
@@ -132,6 +137,7 @@ ros2 launch ouster_ros sensor.launch.xml \
     imu_frame:="os_imu_back" \
     azimuth_window_start:="135000" \
     azimuth_window_end:="315000" \
+    persist_config:=${SET_LIDAR_PERSIST} \
     > "$LOG_DIR/ouster_back.log" 2>&1 &
 
 echo "Sensors launched. Output is in $LOG_DIR/"

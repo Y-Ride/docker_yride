@@ -10,8 +10,8 @@
     # Frames
     lidarFrame: "os_lidar_top"
     baselinkFrame: "os_sensor_top"
-    odometryFrame: "odom"
-    mapFrame: "map"
+    odometryFrame: "odom" # I belive this is an output
+    mapFrame: "map" # I belive this is an output
 
     # GPS Settings
     useImuHeadingInitialization: false           # if using GPS data, set to "true"

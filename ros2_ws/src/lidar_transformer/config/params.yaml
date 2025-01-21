@@ -1,0 +1,34 @@
+lidar_transformer_node:
+  ros__parameters:
+    lidar_topics: 
+      - /ouster_top/points # Comment out the lidar topics you don't want to use
+      - /ouster_left/points
+      - /ouster_right/points
+      - /ouster_front/points
+      - /ouster_back/points
+
+    ################################################################################################
+    #                     Shouldn't need to touch anything below this                              #
+    ################################################################################################
+    target_frame_id: os_lidar_top
+    # Make sure these are in the same order as the lidar_topics (i.e. the first lidar frame id corresponds to the first lidar topic)
+    lidar_frame_ids: 
+      - os_lidar_top
+      - os_lidar_left
+      - os_lidar_right
+      - os_lidar_front
+      - os_lidar_back
+
+    ###############################################################################################
+    #                              Transformation Matricies Flattened                             #
+    ###############################################################################################
+
+    # Names of the following transformations must match the lidar_frame_ids
+    # Falttened 4x4 homogenous transormation matrix
+    os_lidar_top:   [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0]
+    os_lidar_left:  [-0.70710678, -0.70710678, 0.0, -0.0889, 0.46483449, -0.46483449, -0.75356339, -0.73025, 0.53284978, -0.53284978, 0.65737525, -0.2413, 0.0, 0.0, 0.0, 1.0]
+    os_lidar_right: [-0.70710678, 0.70710678, 0.0, -0.0889, -0.47680379, -0.47680379, 0.73845534, 0.73025, 0.52216678, 0.52216678, 0.67430239, -0.2413, 0.0, 0.0, 0.0, 1.0]
+    os_lidar_front: [0.56023338, -0.56023338, -0.61014516, -1.7526, 0.70710678, 0.70710678, 0.0, 0.0, 0.43143778, -0.43143778, 0.79228964, -0.2032, 0.0, 0.0, 0.0, 1.0]
+    os_lidar_back:  [-0.61543441, -0.61543441, 0.49242356, 1.7526, 0.70710678, -0.70710678, 0.0, 0.0, 0.34819604, 0.34819604, 0.8703557, -0.2032, 0.0, 0.0, 0.0, 1.0]
+
+ 

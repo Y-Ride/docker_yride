@@ -11,6 +11,7 @@ ros2_ws/install/
 ros2_ws/bags/humble/
 ros2_ws/bags/jazzy/
 *.json
+*.log
 
 # Ignore sensor logs
 ros2_ws/log_ouster/
