@@ -46,7 +46,7 @@ services:
       tail -f /dev/null
     # ros2 launch ouster_ros
     # sensor.launch.xml
-    # sensor_hostname:=${SENSOR_HOSTNAME_TOP}
+    # sensor_hostname:=${LIDAR_IP_TOP}
     # ouster_ns:=ouster_top
     # viz:=false
     # use_system_default_qos:=true
@@ -59,22 +59,22 @@ services:
   # ouster-ros-front:
   #   <<: *ouster-ros
   #   container_name: ouster-ros-front
-  #   command: sensor_hostname:=${SENSOR_HOSTNAME_FRONT} viz:=false
+  #   command: sensor_hostname:=${LIDAR_IP_FRONT} viz:=false
 
   # ouster-ros-back:
   #   <<: *ouster-ros
   #   container_name: ouster-ros-back
-  #   command: sensor_hostname:=${SENSOR_HOSTNAME_BACK} viz:=false
+  #   command: sensor_hostname:=${LIDAR_IP_BACK} viz:=false
 
   # ouster-ros-left:
   #   <<: *ouster-ros
   #   container_name: ouster-ros-left
-  #   command: sensor_hostname:=${SENSOR_HOSTNAME_LEFT} viz:=false
+  #   command: sensor_hostname:=${LIDAR_IP_LEFT} viz:=false
 
   # ouster-ros-right:
   #   <<: *ouster-ros
   #   container_name: ouster-ros-right
-  #   command: sensor_hostname:=${SENSOR_HOSTNAME_RIGHT} viz:=false
+  #   command: sensor_hostname:=${LIDAR_IP_RIGHT} viz:=false
 
 networks:
   ros2:

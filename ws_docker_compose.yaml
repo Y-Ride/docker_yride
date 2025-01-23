@@ -4,13 +4,13 @@ services:
     build:
       context: ${HOME}/docker_yride
       dockerfile: Dockerfile_ws
-      args: # These arguments help set the owner of the container files to the host user
-        UID: "${UID:-$(id -u)}"
-        GID: "${GID:-$(id -g)}"
-        UNAME: "docker" # User name of container user
+      # args: # These arguments help set the owner of the container files to the host user
+      #   UID: "${UID:-$(id -u)}"
+      #   GID: "${GID:-$(id -g)}"
+      #   UNAME: "docker" # User name of container user
     image: yride_all_together
     container_name: yride_all_together
-    user: "${UID}:${GID}"
+    # user: "${UID}:${GID}"
     volumes:
       - ${HOME}/docker_yride/ros2_ws:/docker_yride/yride_ros2_ws:rw
       - /tmp/.X11-unix:/tmp/.X11-unix # Needed to display RViz within the container
@@ -18,11 +18,11 @@ services:
     environment:
       DISPLAY: ${DISPLAY} # Needed to display RViz within the container
       # set up sensor hostname IPv4 addresses
-      SENSOR_HOSTNAME_TOP: ${SENSOR_HOSTNAME_TOP}
-      SENSOR_HOSTNAME_FRONT: ${SENSOR_HOSTNAME_FRONT}
-      SENSOR_HOSTNAME_RIGHT: ${SENSOR_HOSTNAME_RIGHT}
-      SENSOR_HOSTNAME_LEFT: ${SENSOR_HOSTNAME_LEFT}
-      SENSOR_HOSTNAME_BACK: ${SENSOR_HOSTNAME_BACK}
+      LIDAR_IP_TOP: ${LIDAR_STATIC_IP_TOP}
+      LIDAR_IP_LEFT: ${LIDAR_STATIC_IP_LEFT}
+      LIDAR_IP_RIGHT: ${LIDAR_STATIC_IP_RIGHT}
+      LIDAR_IP_FRONT: ${LIDAR_STATIC_IP_FRONT}
+      LIDAR_IP_BACK: ${LIDAR_STATIC_IP_BACK}
       ROS_DOMAIN_ID: 1
     working_dir: /docker_yride/yride_ros2_ws
     stdin_open: true

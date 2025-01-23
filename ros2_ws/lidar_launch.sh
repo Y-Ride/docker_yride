@@ -48,7 +48,7 @@ fi
     # *** This is the IP address of the host machine. DOUBLE CHECK! ***
 # Retrieve the primary link-local IP address in the 169.254.x.x range
 # udp_address=$(ip addr show scope link | grep -oP 'inet 169\.254\.\d+\.\d+' | awk '{print $2}')
-UDP_ADDRESS=169.254.219.81
+UDP_ADDRESS=192.168.68.45
 echo "UDP address: $UDP_ADDRESS"
 
 USE_SYSTEM_DEFAULT_QOS=true
@@ -63,7 +63,7 @@ fi
 # Launch the sensors and redirect outputs to log files
 # Top # Set min range to 2.0 to exclude the top of the cart
 ros2 launch ouster_ros sensor.launch.xml \
-    sensor_hostname:=${SENSOR_HOSTNAME_TOP} \
+    sensor_hostname:=${LIDAR_IP_TOP} \
     udp_dest:=${UDP_ADDRESS} \
     use_system_default_qos:=${USE_SYSTEM_DEFAULT_QOS} \
     metadata:="$METADATA_FILE_PATH/top_lidar.json" \
@@ -78,7 +78,7 @@ ros2 launch ouster_ros sensor.launch.xml \
 
 # Front
 ros2 launch ouster_ros sensor.launch.xml \
-    sensor_hostname:=${SENSOR_HOSTNAME_FRONT} \
+    sensor_hostname:=${LIDAR_IP_FRONT} \
     udp_dest:=${UDP_ADDRESS} \
     use_system_default_qos:=${USE_SYSTEM_DEFAULT_QOS} \
     metadata:="$METADATA_FILE_PATH/front_lidar.json" \
@@ -94,7 +94,7 @@ ros2 launch ouster_ros sensor.launch.xml \
 
 # Right
 ros2 launch ouster_ros sensor.launch.xml \
-    sensor_hostname:=${SENSOR_HOSTNAME_RIGHT} \
+    sensor_hostname:=${LIDAR_IP_RIGHT} \
     udp_dest:=${UDP_ADDRESS} \
     use_system_default_qos:=${USE_SYSTEM_DEFAULT_QOS} \
     metadata:="$METADATA_FILE_PATH/right_lidar.json" \
@@ -110,7 +110,7 @@ ros2 launch ouster_ros sensor.launch.xml \
 
 # Left
 ros2 launch ouster_ros sensor.launch.xml \
-    sensor_hostname:=${SENSOR_HOSTNAME_LEFT} \
+    sensor_hostname:=${LIDAR_IP_LEFT} \
     udp_dest:=${UDP_ADDRESS} \
     use_system_default_qos:=${USE_SYSTEM_DEFAULT_QOS} \
     metadata:="$METADATA_FILE_PATH/left_lidar.json" \
@@ -126,7 +126,7 @@ ros2 launch ouster_ros sensor.launch.xml \
 
 # Back
 ros2 launch ouster_ros sensor.launch.xml \
-    sensor_hostname:=${SENSOR_HOSTNAME_BACK} \
+    sensor_hostname:=${LIDAR_IP_BACK} \
     udp_dest:=$UDP_ADDRESS \
     use_system_default_qos:=${USE_SYSTEM_DEFAULT_QOS} \
     metadata:="$METADATA_FILE_PATH/back_lidar.json" \
