@@ -13,3 +13,6 @@
 [submodule "Other_drivers/multi_lica_submodule"]
 	path = Other_drivers/multi_lica_submodule
 	url = git@github.com:TUMFTM/Multi_LiCa.git
+[submodule "Other_drivers/inertial_sense_sdk_submodule"]
+	path = Other_drivers/inertial_sense_sdk_submodule
+	url = git@github.com:Y-Ride/inertial-sense-sdk.git

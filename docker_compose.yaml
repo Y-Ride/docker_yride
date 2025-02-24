@@ -3,7 +3,7 @@ services:
   yride_all_together:
     build:
       context: ${HOME}/docker_yride
-      dockerfile: Dockerfile_ws
+      dockerfile: dockerfile
       # args: # These arguments help set the owner of the container files to the host user
       #   UID: "${UID:-$(id -u)}"
       #   GID: "${GID:-$(id -g)}"
@@ -12,11 +12,12 @@ services:
     container_name: yride_all_together
     # user: "${UID}:${GID}"
     volumes:
-      - ${HOME}/docker_yride/ros2_ws:/docker_yride/yride_ros2_ws:rw
+      # - ${HOME}/docker_yride/ros2_ws:/docker_yride/yride_ros2_ws:rw
+      - ${HOME}/docker_yride/Other_drivers/inertial_sense_sdk_submodule:/docker_yride/other_drivers_ros2_ws/src/inertial-sense-sdk:rw
       - /tmp/.X11-unix:/tmp/.X11-unix # Needed to display RViz within the container
       - ${HOME}/docker_yride/ros2_ws/liosam_params.yaml:/docker_yride/other_drivers_ros2_ws/src/LIO-SAM/config/params.yaml:rw
     environment:
-      DISPLAY: ${DISPLAY} # Needed to display RViz within the container
+      DISPLAY: "${DISPLAY}" # Needed to display RViz within the container
       # set up sensor hostname IPv4 addresses
       LIDAR_IP_TOP: ${LIDAR_STATIC_IP_TOP}
       LIDAR_IP_LEFT: ${LIDAR_STATIC_IP_LEFT}

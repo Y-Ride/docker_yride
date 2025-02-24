@@ -108,6 +108,8 @@ RUN curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --
     sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
     sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list && apt-get update && apt-get install -y nvidia-container-toolkit
 
+# Install Inertial Sense SDK to be able to read the custom messages from the imu
+
 ###########################################################################################################
 #                                        Do this Last                                                     #
 ###########################################################################################################
