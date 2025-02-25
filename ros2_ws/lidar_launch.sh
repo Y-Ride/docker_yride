@@ -48,7 +48,7 @@ fi
     # *** This is the IP address of the host machine. DOUBLE CHECK! ***
 # Retrieve the primary link-local IP address in the 169.254.x.x range
 # udp_address=$(ip addr show scope link | grep -oP 'inet 169\.254\.\d+\.\d+' | awk '{print $2}')
-UDP_ADDRESS=192.168.68.46
+UDP_ADDRESS=192.168.68.45
 echo "UDP address: $UDP_ADDRESS"
 
 USE_SYSTEM_DEFAULT_QOS=true
