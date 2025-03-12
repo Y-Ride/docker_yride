@@ -6,7 +6,7 @@ export OUSTER_FRONT_TOPICS="/ouster_front/points /ouster_front/imu /ouster_front
 export OUSTER_RIGHT_TOPICS="/ouster_right/points /ouster_right/imu /ouster_right/metadata"
 export OUSTER_LEFT_TOPICS="/ouster_left/points /ouster_left/imu /ouster_left/metadata"
 export OUSTER_BACK_TOPICS="/ouster_back/points /ouster_back/imu /ouster_back/metadata"
-export OTHER_TOPICS="/tf_static /tf /imu"
+export OTHER_TOPICS="/tf_static /tf /inertial_sense/imu_raw"
 
 # Function to record topics based on flags
 record_bag() {

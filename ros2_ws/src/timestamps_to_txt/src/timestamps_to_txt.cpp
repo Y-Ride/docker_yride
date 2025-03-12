@@ -86,10 +86,10 @@ class TimestampsToTxt : public rclcpp::Node
       RCLCPP_ERROR(rclcpp::get_logger("writeTimestampsToFile"), "Error opening file");
       return;
     }
-    fprintf(fp, "Time in seconds, Time in nanoseconds\n");
+    fprintf(fp, "Time in seconds,Time in nanoseconds\n");
     for (size_t i = 0; i < pointCloudTimestamps.size(); i++)
     {
-      fprintf(fp, "%f, %ld\n", pointCloudTimestamps[i].seconds(), pointCloudTimestamps[i].nanoseconds());
+      fprintf(fp, "%f,%ld\n", pointCloudTimestamps[i].seconds(), pointCloudTimestamps[i].nanoseconds());
     }
     fclose(fp);
 
@@ -99,10 +99,10 @@ class TimestampsToTxt : public rclcpp::Node
       RCLCPP_ERROR(rclcpp::get_logger("writeTimestampsToFile"), "Error opening file");
       return;
     }
-    fprintf(fp, "Time in seconds, Time in nanoseconds\n");
+    fprintf(fp, "Time in seconds,Time in nanoseconds\n");
     for (size_t i = 0; i < imuTimestamps.size(); i++)
     {
-      fprintf(fp, "%f, %ld\n", imuTimestamps[i].seconds(), imuTimestamps[i].nanoseconds());
+      fprintf(fp, "%f,%ld\n", imuTimestamps[i].seconds(), imuTimestamps[i].nanoseconds());
     }
     fclose(fp);
   }

@@ -11,14 +11,30 @@ fi
 
 # Define flags
 viz_flag=false
+top_flag=false
+right_flag=false
+left_flag=false
+front_flag=false
+back_flag=false
+all_flag=true
 
 # Get flags
-while getopts "v" opt; do
+while getopts "vtlrfb" opt; do
     case "$opt" in
         v) viz_flag=true ;;
-        ?) echo "Usage: $0 [-v]" ; exit 1 ;;
+        t) top_flag=true ;;
+        l) left_flag=true ;;
+        r) right_flag=true ;;
+        f) front_flag=true ;;
+        b) back_flag=true ;;
+        ?) echo "Usage: $0 [-v] [-t] [-l] [-r] [-f] [-b]" ; exit 1 ;;
     esac
 done
+
+# If any of the flags are set, then the all flag is false
+if [ "$top_flag" = true ] || [ "$left_flag" = true ] || [ "$right_flag" = true ] || [ "$front_flag" = true ] || [ "$back_flag" = true ]; then
+    all_flag=false
+fi
 
 ## NOTE: The xhost is not available in the container
 # # Check if the xhost command is available
@@ -61,84 +77,100 @@ if [ ! -d "$METADATA_FILE_PATH" ]; then
 fi
 
 # Launch the sensors and redirect outputs to log files
+
 # Top # Set min range to 2.0 to exclude the top of the cart
-ros2 launch ouster_ros sensor.launch.xml \
-    sensor_hostname:=${LIDAR_IP_TOP} \
-    udp_dest:=${UDP_ADDRESS} \
-    use_system_default_qos:=${USE_SYSTEM_DEFAULT_QOS} \
-    metadata:="$METADATA_FILE_PATH/top_lidar.json" \
-    viz:=$viz_flag \
-    ouster_ns:="ouster_top" \
-    sensor_frame:="os_sensor_top" \
-    lidar_frame:="os_lidar_top" \
-    imu_frame:="os_imu_top" \
-    min_range:="2.0" \
-    persist_config:=${SET_LIDAR_PERSIST} \
-    > "$LOG_DIR/ouster_top.log" 2>&1 &
+if [ "$all_flag" = true ] || [ "$top_flag" = true ]; then
+    echo "Launching top sensor"
+    ros2 launch ouster_ros sensor.launch.xml \
+        sensor_hostname:=${LIDAR_IP_TOP} \
+        udp_dest:=${UDP_ADDRESS} \
+        use_system_default_qos:=${USE_SYSTEM_DEFAULT_QOS} \
+        metadata:="$METADATA_FILE_PATH/top_lidar.json" \
+        viz:=$viz_flag \
+        ouster_ns:="ouster_top" \
+        sensor_frame:="os_sensor_top" \
+        lidar_frame:="os_lidar_top" \
+        imu_frame:="os_imu_top" \
+        min_range:="2.0" \
+        persist_config:=${SET_LIDAR_PERSIST} \
+        > "$LOG_DIR/ouster_top.log" 2>&1 &
+fi
 
 # Front
-ros2 launch ouster_ros sensor.launch.xml \
-    sensor_hostname:=${LIDAR_IP_FRONT} \
-    udp_dest:=${UDP_ADDRESS} \
-    use_system_default_qos:=${USE_SYSTEM_DEFAULT_QOS} \
-    metadata:="$METADATA_FILE_PATH/front_lidar.json" \
-    viz:=false \
-    ouster_ns:="ouster_front" \
-    sensor_frame:="os_sensor_front" \
-    lidar_frame:="os_lidar_front" \
-    imu_frame:="os_imu_front" \
-    azimuth_window_start:="45000" \
-    azimuth_window_end:="225000" \
-    persist_config:=${SET_LIDAR_PERSIST} \
-    > "$LOG_DIR/ouster_front.log" 2>&1 &
+if [ "$all_flag" = true ] || [ "$front_flag" = true ]; then
+    echo "Launching front sensor"
+    ros2 launch ouster_ros sensor.launch.xml \
+        sensor_hostname:=${LIDAR_IP_FRONT} \
+        udp_dest:=${UDP_ADDRESS} \
+        use_system_default_qos:=${USE_SYSTEM_DEFAULT_QOS} \
+        metadata:="$METADATA_FILE_PATH/front_lidar.json" \
+        viz:=false \
+        ouster_ns:="ouster_front" \
+        sensor_frame:="os_sensor_front" \
+        lidar_frame:="os_lidar_front" \
+        imu_frame:="os_imu_front" \
+        azimuth_window_start:="45000" \
+        azimuth_window_end:="225000" \
+        persist_config:=${SET_LIDAR_PERSIST} \
+        > "$LOG_DIR/ouster_front.log" 2>&1 &
+fi
 
 # Right
-ros2 launch ouster_ros sensor.launch.xml \
-    sensor_hostname:=${LIDAR_IP_RIGHT} \
-    udp_dest:=${UDP_ADDRESS} \
-    use_system_default_qos:=${USE_SYSTEM_DEFAULT_QOS} \
-    metadata:="$METADATA_FILE_PATH/right_lidar.json" \
-    viz:=false \
-    ouster_ns:="ouster_right" \
-    sensor_frame:="os_sensor_right" \
-    lidar_frame:="os_lidar_right" \
-    imu_frame:="os_imu_right" \
-    azimuth_window_start:="135000" \
-    azimuth_window_end:="315000" \
-    persist_config:=${SET_LIDAR_PERSIST} \
-    > "$LOG_DIR/ouster_right.log" 2>&1 &
+if [ "$all_flag" = true ] || [ "$right_flag" = true ]; then
+    echo "Launching right sensor"
+    ros2 launch ouster_ros sensor.launch.xml \
+        sensor_hostname:=${LIDAR_IP_RIGHT} \
+        udp_dest:=${UDP_ADDRESS} \
+        use_system_default_qos:=${USE_SYSTEM_DEFAULT_QOS} \
+        metadata:="$METADATA_FILE_PATH/right_lidar.json" \
+        viz:=false \
+        ouster_ns:="ouster_right" \
+        sensor_frame:="os_sensor_right" \
+        lidar_frame:="os_lidar_right" \
+        imu_frame:="os_imu_right" \
+        azimuth_window_start:="135000" \
+        azimuth_window_end:="315000" \
+        persist_config:=${SET_LIDAR_PERSIST} \
+        > "$LOG_DIR/ouster_right.log" 2>&1 &
+fi
 
 # Left
-ros2 launch ouster_ros sensor.launch.xml \
-    sensor_hostname:=${LIDAR_IP_LEFT} \
-    udp_dest:=${UDP_ADDRESS} \
-    use_system_default_qos:=${USE_SYSTEM_DEFAULT_QOS} \
-    metadata:="$METADATA_FILE_PATH/left_lidar.json" \
-    viz:=false \
-    ouster_ns:="ouster_left" \
-    sensor_frame:="os_sensor_left" \
-    lidar_frame:="os_lidar_left" \
-    imu_frame:="os_imu_left" \
-    azimuth_window_start:="45000" \
-    azimuth_window_end:="225000" \
-    persist_config:=${SET_LIDAR_PERSIST} \
-    > "$LOG_DIR/ouster_left.log" 2>&1 &
+if [ "$all_flag" = true ] || [ "$left_flag" = true ]; then
+    echo "Launching left sensor"
+    ros2 launch ouster_ros sensor.launch.xml \
+        sensor_hostname:=${LIDAR_IP_LEFT} \
+        udp_dest:=${UDP_ADDRESS} \
+        use_system_default_qos:=${USE_SYSTEM_DEFAULT_QOS} \
+        metadata:="$METADATA_FILE_PATH/left_lidar.json" \
+        viz:=false \
+        ouster_ns:="ouster_left" \
+        sensor_frame:="os_sensor_left" \
+        lidar_frame:="os_lidar_left" \
+        imu_frame:="os_imu_left" \
+        azimuth_window_start:="45000" \
+        azimuth_window_end:="225000" \
+        persist_config:=${SET_LIDAR_PERSIST} \
+        > "$LOG_DIR/ouster_left.log" 2>&1 &
+fi
 
 # Back
-ros2 launch ouster_ros sensor.launch.xml \
-    sensor_hostname:=${LIDAR_IP_BACK} \
-    udp_dest:=$UDP_ADDRESS \
-    use_system_default_qos:=${USE_SYSTEM_DEFAULT_QOS} \
-    metadata:="$METADATA_FILE_PATH/back_lidar.json" \
-    viz:=false \
-    ouster_ns:="ouster_back" \
-    sensor_frame:="os_sensor_back" \
-    lidar_frame:="os_lidar_back" \
-    imu_frame:="os_imu_back" \
-    azimuth_window_start:="135000" \
-    azimuth_window_end:="315000" \
-    persist_config:=${SET_LIDAR_PERSIST} \
-    > "$LOG_DIR/ouster_back.log" 2>&1 &
+if [ "$all_flag" = true ] || [ "$back_flag" = true ]; then
+    echo "Launching back sensor"
+    ros2 launch ouster_ros sensor.launch.xml \
+        sensor_hostname:=${LIDAR_IP_BACK} \
+        udp_dest:=$UDP_ADDRESS \
+        use_system_default_qos:=${USE_SYSTEM_DEFAULT_QOS} \
+        metadata:="$METADATA_FILE_PATH/back_lidar.json" \
+        viz:=false \
+        ouster_ns:="ouster_back" \
+        sensor_frame:="os_sensor_back" \
+        lidar_frame:="os_lidar_back" \
+        imu_frame:="os_imu_back" \
+        azimuth_window_start:="135000" \
+        azimuth_window_end:="315000" \
+        persist_config:=${SET_LIDAR_PERSIST} \
+        > "$LOG_DIR/ouster_back.log" 2>&1 &
+fi
 
 echo "Sensors launched. Output is in $LOG_DIR/"
 
