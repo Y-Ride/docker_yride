@@ -69,6 +69,9 @@ echo "UDP address: $UDP_ADDRESS"
 
 USE_SYSTEM_DEFAULT_QOS=true
 SET_LIDAR_PERSIST=false
+UDP_OFFSET=-37.0
+TIMESTAMP_MODE="TIME_FROM_PTP_1588"
+UDP_LIDAR_PORT=7502
 
 METADATA_FILE_PATH="$SCRIPT_DIR/log_ouster/metadata"
 if [ ! -d "$METADATA_FILE_PATH" ]; then
@@ -92,46 +95,12 @@ if [ "$all_flag" = true ] || [ "$top_flag" = true ]; then
         lidar_frame:="os_lidar_top" \
         imu_frame:="os_imu_top" \
         min_range:="2.0" \
+        timestamp_mode:=${TIMESTAMP_MODE} \
+        ptp_utc_tai_offset:=${UDP_OFFSET} \
+        lidar_port:=${UDP_LIDAR_PORT} \
+        imu_port:=$((UDP_LIDAR_PORT + 1)) \
         persist_config:=${SET_LIDAR_PERSIST} \
         > "$LOG_DIR/ouster_top.log" 2>&1 &
-fi
-
-# Front
-if [ "$all_flag" = true ] || [ "$front_flag" = true ]; then
-    echo "Launching front sensor"
-    ros2 launch ouster_ros sensor.launch.xml \
-        sensor_hostname:=${LIDAR_IP_FRONT} \
-        udp_dest:=${UDP_ADDRESS} \
-        use_system_default_qos:=${USE_SYSTEM_DEFAULT_QOS} \
-        metadata:="$METADATA_FILE_PATH/front_lidar.json" \
-        viz:=false \
-        ouster_ns:="ouster_front" \
-        sensor_frame:="os_sensor_front" \
-        lidar_frame:="os_lidar_front" \
-        imu_frame:="os_imu_front" \
-        azimuth_window_start:="45000" \
-        azimuth_window_end:="225000" \
-        persist_config:=${SET_LIDAR_PERSIST} \
-        > "$LOG_DIR/ouster_front.log" 2>&1 &
-fi
-
-# Right
-if [ "$all_flag" = true ] || [ "$right_flag" = true ]; then
-    echo "Launching right sensor"
-    ros2 launch ouster_ros sensor.launch.xml \
-        sensor_hostname:=${LIDAR_IP_RIGHT} \
-        udp_dest:=${UDP_ADDRESS} \
-        use_system_default_qos:=${USE_SYSTEM_DEFAULT_QOS} \
-        metadata:="$METADATA_FILE_PATH/right_lidar.json" \
-        viz:=false \
-        ouster_ns:="ouster_right" \
-        sensor_frame:="os_sensor_right" \
-        lidar_frame:="os_lidar_right" \
-        imu_frame:="os_imu_right" \
-        azimuth_window_start:="135000" \
-        azimuth_window_end:="315000" \
-        persist_config:=${SET_LIDAR_PERSIST} \
-        > "$LOG_DIR/ouster_right.log" 2>&1 &
 fi
 
 # Left
@@ -149,8 +118,58 @@ if [ "$all_flag" = true ] || [ "$left_flag" = true ]; then
         imu_frame:="os_imu_left" \
         azimuth_window_start:="45000" \
         azimuth_window_end:="225000" \
+        timestamp_mode:=${TIMESTAMP_MODE} \
+        ptp_utc_tai_offset:=${UDP_OFFSET} \
+        lidar_port:=$((UDP_LIDAR_PORT + 2)) \
+        imu_port:=$((UDP_LIDAR_PORT + 3)) \
         persist_config:=${SET_LIDAR_PERSIST} \
         > "$LOG_DIR/ouster_left.log" 2>&1 &
+fi
+
+# Right
+if [ "$all_flag" = true ] || [ "$right_flag" = true ]; then
+    echo "Launching right sensor"
+    ros2 launch ouster_ros sensor.launch.xml \
+        sensor_hostname:=${LIDAR_IP_RIGHT} \
+        udp_dest:=${UDP_ADDRESS} \
+        use_system_default_qos:=${USE_SYSTEM_DEFAULT_QOS} \
+        metadata:="$METADATA_FILE_PATH/right_lidar.json" \
+        viz:=false \
+        ouster_ns:="ouster_right" \
+        sensor_frame:="os_sensor_right" \
+        lidar_frame:="os_lidar_right" \
+        imu_frame:="os_imu_right" \
+        azimuth_window_start:="135000" \
+        azimuth_window_end:="315000" \
+        timestamp_mode:=${TIMESTAMP_MODE} \
+        ptp_utc_tai_offset:=${UDP_OFFSET} \
+        lidar_port:=$((UDP_LIDAR_PORT + 4)) \
+        imu_port:=$((UDP_LIDAR_PORT + 5)) \
+        persist_config:=${SET_LIDAR_PERSIST} \
+        > "$LOG_DIR/ouster_right.log" 2>&1 &
+fi
+
+# Front
+if [ "$all_flag" = true ] || [ "$front_flag" = true ]; then
+    echo "Launching front sensor"
+    ros2 launch ouster_ros sensor.launch.xml \
+        sensor_hostname:=${LIDAR_IP_FRONT} \
+        udp_dest:=${UDP_ADDRESS} \
+        use_system_default_qos:=${USE_SYSTEM_DEFAULT_QOS} \
+        metadata:="$METADATA_FILE_PATH/front_lidar.json" \
+        viz:=false \
+        ouster_ns:="ouster_front" \
+        sensor_frame:="os_sensor_front" \
+        lidar_frame:="os_lidar_front" \
+        imu_frame:="os_imu_front" \
+        azimuth_window_start:="45000" \
+        azimuth_window_end:="225000" \
+        timestamp_mode:=${TIMESTAMP_MODE} \
+        ptp_utc_tai_offset:=${UDP_OFFSET} \
+        lidar_port:=$((UDP_LIDAR_PORT + 6)) \
+        imu_port:=$((UDP_LIDAR_PORT + 7)) \
+        persist_config:=${SET_LIDAR_PERSIST} \
+        > "$LOG_DIR/ouster_front.log" 2>&1 &
 fi
 
 # Back
@@ -168,6 +187,10 @@ if [ "$all_flag" = true ] || [ "$back_flag" = true ]; then
         imu_frame:="os_imu_back" \
         azimuth_window_start:="135000" \
         azimuth_window_end:="315000" \
+        timestamp_mode:=${TIMESTAMP_MODE} \
+        ptp_utc_tai_offset:=${UDP_OFFSET} \
+        lidar_port:=$((UDP_LIDAR_PORT + 8)) \
+        imu_port:=$((UDP_LIDAR_PORT + 9)) \
         persist_config:=${SET_LIDAR_PERSIST} \
         > "$LOG_DIR/ouster_back.log" 2>&1 &
 fi
