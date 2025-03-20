@@ -2,11 +2,12 @@
 
 # Define environment variables for topics
 export OUSTER_TOP_TOPICS="/ouster_top/points /ouster_top/imu /ouster_top/metadata"
-export OUSTER_FRONT_TOPICS="/ouster_front/points /ouster_front/imu /ouster_front/metadata"
-export OUSTER_RIGHT_TOPICS="/ouster_right/points /ouster_right/imu /ouster_right/metadata"
-export OUSTER_LEFT_TOPICS="/ouster_left/points /ouster_left/imu /ouster_left/metadata"
-export OUSTER_BACK_TOPICS="/ouster_back/points /ouster_back/imu /ouster_back/metadata"
-export OTHER_TOPICS="/tf_static /tf /inertial_sense/imu_raw"
+export OUSTER_FRONT_TOPICS="/ouster_front/points /ouster_front/metadata"
+export OUSTER_RIGHT_TOPICS="/ouster_right/points /ouster_right/metadata"
+export OUSTER_LEFT_TOPICS="/ouster_left/points /ouster_left/metadata"
+export OUSTER_BACK_TOPICS="/ouster_back/points /ouster_back/metadata"
+export INERTIAL_SENSE_TOPICS="/inertial_sense/imu_raw /inertial_sense/odom_ins_ned /inertial_sense/gps1/info /inertial_sense/gps1/pos_vel /inertial_sense/gps2/info /inertial_sense/gps2/pos_vel"
+export OTHER_TOPICS="/tf_static /tf"
 
 # Function to record topics based on flags
 record_bag() {
@@ -56,6 +57,11 @@ record_bag() {
     if [ ${#topics[@]} -eq 0 ]; then
         echo "Usage: bag [-f] [-r] [-l] [-t] [-b] [-a] [-o file_path]"
         return 1
+    fi
+
+    # Add inertial_sense imu/gps topics
+    if [ -n "$INERTIAL_SENSE_TOPICS" ]; then
+        topics+=($INERTIAL_SENSE_TOPICS)
     fi
 
     # Add other_topics to topics if it's not empty

@@ -12,10 +12,11 @@ services:
     container_name: yride_all_together
     # user: "${UID}:${GID}"
     volumes:
-      # - ${HOME}/docker_yride/ros2_ws:/docker_yride/yride_ros2_ws:rw
-      - ${HOME}/docker_yride/Other_drivers/inertial_sense_sdk_submodule:/docker_yride/other_drivers_ros2_ws/src/inertial-sense-sdk:rw
+      - ${HOME}/docker_yride/ros2_ws:/docker_yride/yride_ros2_ws:rw
+      # - ${HOME}/docker_yride/Other_drivers/inertial_sense_sdk_submodule:/docker_yride/other_drivers_ros2_ws/src/inertial-sense-sdk:rw
       - /tmp/.X11-unix:/tmp/.X11-unix # Needed to display RViz within the container
       - ${HOME}/docker_yride/ros2_ws/liosam_params.yaml:/docker_yride/other_drivers_ros2_ws/src/LIO-SAM/config/params.yaml:rw
+      # - ${HOME}/.vscode-server:/root/.vscode-server # Added to make it so that the vscode server doesn't need to be installed in the container every time
     environment:
       DISPLAY: "${DISPLAY}" # Needed to display RViz within the container
       # set up sensor hostname IPv4 addresses
@@ -25,6 +26,8 @@ services:
       LIDAR_IP_FRONT: ${LIDAR_STATIC_IP_FRONT}
       LIDAR_IP_BACK: ${LIDAR_STATIC_IP_BACK}
       ROS_DOMAIN_ID: 1
+      # # Increate UDP buffer size
+      # RMW_FASTRTPS_UDP_RECEIVE_BUFFER_SIZE: 10485760
     working_dir: /docker_yride/yride_ros2_ws
     stdin_open: true
     tty: true
