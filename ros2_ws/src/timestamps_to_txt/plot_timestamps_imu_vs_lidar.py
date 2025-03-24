@@ -10,10 +10,11 @@ print(f"Working directory: {os.getcwd()}")
 
 # sys.exit()
 # Load the data
-df_imu = pd.read_csv('timestamps_imu.txt', delimiter=', ', header=0)
+data_folder = './results'
+df_imu = pd.read_csv(f'{data_folder}/timestamps_imu.txt', delimiter=',', header=0)
 print(df_imu.keys()[1])
 print(df_imu.head())
-df_lidar = pd.read_csv('timestamps_lidar.txt', delimiter=',', header=0)
+df_lidar = pd.read_csv(f'{data_folder}/timestamps_lidar.txt', delimiter=',', header=0)
 print(df_lidar.head())
 
 timestamps_imu = df_imu[df_imu.keys()[1]].values * 1e-9

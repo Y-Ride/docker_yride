@@ -10,6 +10,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
 add_executable(timestamps_to_txt src/timestamps_to_txt.cpp)
 target_include_directories(timestamps_to_txt PUBLIC
@@ -21,10 +22,21 @@ ament_target_dependencies(
   "rclcpp"
   "std_msgs"
   "sensor_msgs"
+  "geometry_msgs"
 )
 
 install(TARGETS timestamps_to_txt
   DESTINATION lib/${PROJECT_NAME})
+
+install(DIRECTORY config
+  DESTINATION share/${PROJECT_NAME}/
+)
+install(DIRECTORY launch
+  DESTINATION share/${PROJECT_NAME}/
+)
+install(DIRECTORY include/
+  DESTINATION include/${PROJECT_NAME}/
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

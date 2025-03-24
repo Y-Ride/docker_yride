@@ -1,0 +1,12 @@
+/timestamps_to_txt:
+  ros__parameters:
+    # Lidar point cloud topic to subscribe to
+    lidar_topic: "/ouster_top/points"
+    lidar_imu_topic: "/ouster_top/imu"
+
+    # IMU topic to subscribe to
+    imu_topic: "/inertial_sense/imu_raw"
+
+    # Output file path for the timestamps
+    # Needs to end with a '/'
+    output_folder: "/docker_yride/yride_ros2_ws/src/timestamps_to_txt/results/outside_linear/"
