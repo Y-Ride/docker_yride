@@ -3,116 +3,68 @@ ARG ROS_DISTRO=humble
 
 # This is an auto generated Dockerfile for ros:ros-base
 # generated from docker_images_ros2/create_ros_image.Dockerfile.em
-FROM ros:${ROS_DISTRO}-ros-core
+FROM ros:${ROS_DISTRO}
 
 # nvidia-container-runtime
-ENV NVIDIA_VISIBLE_DEVICES \
-    ${NVIDIA_VISIBLE_DEVICES:-all}
-ENV NVIDIA_DRIVER_CAPABILITIES \
-    ${NVIDIA_DRIVER_CAPABILITIES:+$NVIDIA_DRIVER_CAPABILITIES,}graphics
-
-# install bootstrap tools
-RUN apt-get update && apt-get install --no-install-recommends -y \
-    build-essential \
-    git \
-    python3-colcon-common-extensions \
-    python3-colcon-mixin \
-    python3-rosdep \
-    python3-vcstool \
-    && rm -rf /var/lib/apt/lists/*
+# ENV NVIDIA_VISIBLE_DEVICES \
+#     ${NVIDIA_VISIBLE_DEVICES:-all}
+# ENV NVIDIA_DRIVER_CAPABILITIES \
+#     ${NVIDIA_DRIVER_CAPABILITIES:+$NVIDIA_DRIVER_CAPABILITIES,}graphics
 
 # install nano and pip
 RUN apt-get update && apt-get install -y nano \
+    ros-${ROS_DISTRO}-gtsam \
+    ros-${ROS_DISTRO}-perception-pcl \
+    ros-${ROS_DISTRO}-pcl-msgs \
+    ros-${ROS_DISTRO}-vision-opencv \
+    ros-${ROS_DISTRO}-xacro \
+    ros-${ROS_DISTRO}-rviz2 \
+    cmake \
+    vim \
+    tmux \
     python3-pip \
-    && pip3 install --upgrade pip
+    && pip3 install --upgrade pip \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install Segmentation Libraries
 RUN python3 -m pip install numpy matplotlib opencv-python open3d ouster-sdk 
-# RUN python3 -m pip install torch==1.12.1+cu113 torchvision==0.13.1+cu113 --extra-index-url https://download.pytorch.org/whl/cu113 
-# RUN python3 -m pip install 'git+https://github.com/facebookresearch/detectron2.git'
-# RUN git clone https://github.com/bytedance/kmax-deeplab.git && cd kmax-deeplab && python3 -m pip install -r requirements.txt
 
-# bootstrap rosdep
-RUN rosdep init && \
-  rosdep update --rosdistro $ROS_DISTRO
+# Install Ouster and LIO-SAM
+WORKDIR /docker_yride/other_drivers_ros2_ws/src
+RUN git clone -b ros2 --recurse-submodules https://github.com/ouster-lidar/ouster-ros.git && \
+    git clone -b ros2 --recurse-submodules https://github.com/TixiaoShan/LIO-SAM.git
 
-# setup colcon mixin and metadata
-RUN colcon mixin add default \
-      https://raw.githubusercontent.com/colcon/colcon-mixin-repository/master/index.yaml && \
-    colcon mixin update && \
-    colcon metadata add default \
-      https://raw.githubusercontent.com/colcon/colcon-metadata-repository/master/index.yaml && \
-    colcon metadata update
-
-# install ros2 packages
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ros-${ROS_DISTRO}-desktop \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN apt-get update && apt-get install ros-${ROS_DISTRO}-gtsam cmake vim tmux -y && echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc 
-
-# Install Livox SDK (Needed for Fast LIO-SAM)
-RUN git clone https://github.com/Livox-SDK/Livox-SDK2.git && cd ./Livox-SDK2/ && mkdir build && cd build && cmake .. && make -j && make install
-
-# Install ros2 driver for Livox SDK 
-RUN git clone https://github.com/Livox-SDK/livox_ros_driver2.git ws_livox/src/livox_ros_driver2 && \
-    . /opt/ros/${ROS_DISTRO}/setup.sh && \
-    cd ws_livox/src/livox_ros_driver2 && \
-    ./build.sh ${ROS_DISTRO} && \
-    echo "source /ws_livox/install/setup.bash" >> ~/.bashrc
-
-# # Install Fast-LIO and Ouster package
-# RUN mkdir -p /docker_yride/other_drivers_ros2_ws/src && \
-#   cd /docker_yride/other_drivers_ros2_ws/src && \
-#   git clone -b ros2 --recurse-submodules https://github.com/ouster-lidar/ouster-ros.git && \
-#   git clone https://github.com/BYU-FRoSt-Lab/FAST_LIO.git --recursive && \
-#   cd FAST_LIO && \
-#   git checkout ROS2 && git pull && \
-#   cd /docker_yride/other_drivers_ros2_ws && \
-#   . /ws_livox/install/setup.sh && \
-#   rosdep install --from-paths src --ignore-src -y && \
-#   colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release && \
-#   echo "source /docker_yride/other_drivers_ros2_ws/install/setup.bash" >> ~/.bashrc
-
-# Install LIO-SAM
-RUN apt-get update && sudo apt install ros-${ROS_DISTRO}-perception-pcl \
-    ros-${ROS_DISTRO}-pcl-msgs \
-    ros-${ROS_DISTRO}-vision-opencv \
-    ros-${ROS_DISTRO}-xacro -y
-RUN mkdir -p /docker_yride/other_drivers_ros2_ws/src && \
-    cd /docker_yride/other_drivers_ros2_ws/src && \
-    git clone -b ros2 --recurse-submodules https://github.com/ouster-lidar/ouster-ros.git && \
-    # cd ouster-ros && git fetch --all --tags && git checkout tags/ros2-v0.13.1 && cd .. && \
-    git clone https://github.com/TixiaoShan/LIO-SAM.git && \
-    cd LIO-SAM && git checkout ros2 && git pull && \
-    . /ws_livox/install/setup.sh && \
-    cd ../.. && \
-    # rosdep install --from-paths src --ignore-src -y && 
-    colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release && \
-    echo "source /docker_yride/other_drivers_ros2_ws/install/setup.bash" >> ~/.bashrc
-# ADD ros2_ws/liosam_params.yaml params.yaml
-# RUN mv params.yaml /docker_yride/other_drivers_ros2_ws/src/LIO-SAM/config/params.yaml
-
-
+# Change a few minor things in LIO-SAM
 # The RAW param is thorwing an error. 
-RUN cd docker_yride/other_drivers_ros2_ws/src/ouster-ros/ouster-ros/config/ && \
+RUN cd ouster-ros/ouster-ros/config/ && \
   sed -i 's/proc_mask: IMU|PCL|SCAN|IMG|RAW/proc_mask: IMU|PCL|SCAN|IMG/' driver_params.yaml && \
   sed -i 's/use_system_default_qos: false/use_system_default_qos: true/' driver_params.yaml
 
+ADD ros2_ws/liosam_params.yaml params.yaml
+RUN mv params.yaml LIO-SAM/config/params.yaml
 
-# Install ros2 IMU + LUCID Camera + Velodyne
-RUN apt-get update && apt-get install ros-${ROS_DISTRO}-microstrain-inertial-driver ros-${ROS_DISTRO}-microstrain-inertial-rqt -y
-
-RUN curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
-    && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
-    sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
-    sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list && apt-get update && apt-get install -y nvidia-container-toolkit
+# Build Ouster and LIO-SAM
+# Done in separate parts to avoid the build failing due to the size of the build
+RUN cd .. && . /opt/ros/${ROS_DISTRO}/setup.sh && \
+    colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-select ouster_sensor_msgs ouster_ros
+RUN cd .. && . /opt/ros/${ROS_DISTRO}/setup.sh && \
+    colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-select lio_sam
 
 # Install Inertial Sense SDK to be able to read the custom messages from the imu
-RUN cd /docker_yride/other_drivers_ros2_ws/src && \
-    git clone --recursive https://github.com/Y-Ride/inertial-sense-sdk.git && \
-    cd inertial-sense-sdk/scripts && \
-    ./build_ros2.sh
+# The build_ros2.sh script also runs colcon build on the inertial sense packages only
+RUN git clone --recursive https://github.com/Y-Ride/inertial-sense-sdk.git && \
+    ./inertial-sense-sdk/scripts/build_ros2.sh
+
+# RUN curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
+#     && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+#     sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+#     sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list && apt-get update && apt-get install -y nvidia-container-toolkit
+
+# # Add useful aliases, functions, and environment variables to the bashrc
+# ARG HOST_HOME=/home/yride
+# WORKDIR /yride_env_setup
+# COPY ${HOST_HOME}/yride_env_setup /yride_env_setup
+# RUN ./initial_setup.sh
 
 ###########################################################################################################
 #                                        Do this Last                                                     #
@@ -134,5 +86,4 @@ RUN cd /docker_yride/other_drivers_ros2_ws/src && \
 # USER $UNAME
 
 RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc && \
-    echo "source /docker_yride/other_drivers_ros2_ws/install/setup.bash" >> ~/.bashrc && \
-    echo "source /ws_livox/install/setup.bash" >> ~/.bashrc
+    echo "source /docker_yride/other_drivers_ros2_ws/install/setup.bash" >> ~/.bashrc

@@ -3,8 +3,8 @@
 
     # Topics
     pointCloudTopic: "/ouster_top/points"                   # Point cloud data
-    imuTopic: "/ouster_top/imu"                        # IMU data
-    # imuTopic: "/inertial_sense/imu_raw"                        # IMU data
+    # imuTopic: "/ouster_top/imu"                        # IMU data
+    imuTopic: "/inertial_sense/imu_raw"                        # IMU data
     odomTopic: "odometry/imu"                    # IMU pre-preintegration odometry, same frequency as IMU
     gpsTopic: "odometry/gpsz"                    # GPS odometry topic from navsat, see module_navsat.launch file
 
@@ -42,17 +42,19 @@
     imuGravity: 9.80511
     imuRPYWeight: 0.01
 
+    # extrinsicTrans:  [0.0, 0.0, 0.0]
     extrinsicTrans:  [-0.937882, 0.202898, -1.5748]
-    # extrinsicRot:    [1.0,  0.0,  0.0, # Verified per LIO-SAM video
+    
+    # extrinsicRot:    [-1.0,  0.0,  0.0, # Verified per LIO-SAM video
     #                   0.0,  1.0,  0.0, # Verified for the top lidar
-    #                   0.0,  0.0, 1.0 ]
+    #                   0.0,  0.0, -1.0 ]
     extrinsicRot: [-0.99966523,  0.00557784,  0.0252648,
                     0.0057388,   0.99996367,  0.00630318,
                    -0.02522873,  0.00644606, -0.99966092]
                    
-    extrinsicRPY: [-0.99966523,  0.00557784,  0.0252648,
-                    0.0057388,   0.99996367,  0.00630318,
-                   -0.02522873,  0.00644606, -0.99966092]
+    # extrinsicRPY: [-0.99966523,  0.00557784,  0.0252648,
+    #                 0.0057388,   0.99996367,  0.00630318,
+    #                -0.02522873,  0.00644606, -0.99966092]
 
     # LOAM feature threshold
     edgeThreshold: 1.0
