@@ -16,3 +16,9 @@
 [submodule "Other_drivers/inertial_sense_sdk_submodule"]
 	path = Other_drivers/inertial_sense_sdk_submodule
 	url = git@github.com:Y-Ride/inertial-sense-sdk.git
+[submodule "ros2_ws/src/liorf_localization"]
+	path = ros2_ws/src/liorf_localization
+	url = git@github.com:Y-Ride/liorf_localization.git
+[submodule "ros2_ws/src/liorf"]
+	path = ros2_ws/src/liorf
+	url = git@github.com:Y-Ride/liorf.git
