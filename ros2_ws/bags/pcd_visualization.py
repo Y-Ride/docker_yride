@@ -1,7 +1,5 @@
 import open3d as o3d
 import argparse
-import numpy as np
-import matplotlib.pyplot as plt
 import os
 
 # Parse the arguments
