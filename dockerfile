@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y nano \
     ros-${ROS_DISTRO}-vision-opencv \
     ros-${ROS_DISTRO}-xacro \
     ros-${ROS_DISTRO}-rviz2 \
+    libgeographic-dev \
     cmake \
     vim \
     tmux \
@@ -54,6 +55,15 @@ RUN cd .. && . /opt/ros/${ROS_DISTRO}/setup.sh && \
 # The build_ros2.sh script also runs colcon build on the inertial sense packages only
 RUN git clone --recursive https://github.com/Y-Ride/inertial-sense-sdk.git && \
     ./inertial-sense-sdk/scripts/build_ros2.sh
+
+# Build LIO-RF and LIORF-Localization in the src directory
+WORKDIR /docker_yride/yride_ros2_ws/src
+RUN git clone -b liorf-ros2 --recurse-submodules https://github.com/Y-Ride/liorf.git && \
+    git clone -b liorf_localization-ros2 --recurse-submodules https://github.com/Y-Ride/liorf_localization.git
+RUN cd .. && . /opt/ros/${ROS_DISTRO}/setup.sh && \
+    colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-select liorf
+RUN cd .. && . /opt/ros/${ROS_DISTRO}/setup.sh && \
+    colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-select liorf_localization
 
 # RUN curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
 #     && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
@@ -93,8 +103,4 @@ RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc && \
 RUN echo "if [ -f /yride_env_setup/custom_env.sh ]; then" >> ~/.bashrc && \
     echo "  source /yride_env_setup/custom_env.sh" >> ~/.bashrc && \
     echo "fi" >> ~/.bashrc
-
-# Needed for liorf
-# Move up next time doing big build
-RUN apt install libgeographic-dev -y
  
