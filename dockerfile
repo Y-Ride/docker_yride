@@ -41,7 +41,7 @@ RUN cd ouster-ros/ouster-ros/config/ && \
   sed -i 's/proc_mask: IMU|PCL|SCAN|IMG|RAW/proc_mask: IMU|PCL|SCAN|IMG/' driver_params.yaml && \
   sed -i 's/use_system_default_qos: false/use_system_default_qos: true/' driver_params.yaml
 
-ADD ros2_ws/liosam_params.yaml params.yaml
+ADD ros2_ws/src/liosam_params.yaml params.yaml
 RUN mv params.yaml LIO-SAM/config/params.yaml
 
 # Build Ouster and LIO-SAM
@@ -57,7 +57,7 @@ RUN git clone --recursive https://github.com/Y-Ride/inertial-sense-sdk.git && \
     ./inertial-sense-sdk/scripts/build_ros2.sh
 
 # Build LIO-RF and LIORF-Localization in the src directory
-WORKDIR /docker_yride/yride_ros2_ws/src
+WORKDIR /docker_yride/ros2_ws/src
 RUN git clone -b liorf-ros2 --recurse-submodules https://github.com/Y-Ride/liorf.git && \
     git clone -b liorf_localization-ros2 --recurse-submodules https://github.com/Y-Ride/liorf_localization.git
 RUN cd .. && . /opt/ros/${ROS_DISTRO}/setup.sh && \
@@ -97,7 +97,7 @@ RUN cd .. && . /opt/ros/${ROS_DISTRO}/setup.sh && \
 
 RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc && \
     echo "source /docker_yride/other_drivers_ros2_ws/install/setup.bash" >> ~/.bashrc && \
-    echo "source /docker_yride/yride_ros2_ws/install/setup.bash" >> ~/.bashrc
+    echo "source /docker_yride/ros2_ws/install/setup.bash" >> ~/.bashrc
 
 # Include the custom environment setup script
 RUN echo "if [ -f /yride_env_setup/custom_env.sh ]; then" >> ~/.bashrc && \

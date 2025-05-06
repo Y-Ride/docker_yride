@@ -2,7 +2,7 @@ services:
   # Y-ride ROS2 workspace
   yride_all_together:
     build:
-      context: ${HOME}/docker_yride
+      context: .
       dockerfile: dockerfile
       # args: # These arguments help set the owner of the container files to the host user
       #   UID: "${UID:-$(id -u)}"
@@ -12,12 +12,14 @@ services:
     container_name: yride_all_together
     # user: "${UID}:${GID}"
     volumes:
-      - ${HOME}/docker_yride/ros2_ws:/docker_yride/yride_ros2_ws:rw
-      # - ${HOME}/docker_yride/Other_drivers/inertial_sense_sdk_submodule:/docker_yride/other_drivers_ros2_ws/src/inertial-sense-sdk:rw
+      - ${HOME}/docker_yride/ros2_ws/src:/docker_yride/ros2_ws/src:rw
+      - ${HOME}/docker_yride/ros2_ws/bags:/docker_yride/ros2_ws/bags:rw
+      - ${HOME}/docker_yride/ros2_ws/maps:/docker_yride/ros2_ws/maps:rw
+      - ${HOME}/docker_yride/ros2_ws/rviz_config:/docker_yride/ros2_ws/rviz_config:rw
+      - ${HOME}/docker_yride/ros2_ws/log_ouster:/docker_yride/ros2_ws/log_ouster:rw
       - /tmp/.X11-unix:/tmp/.X11-unix # Needed to display RViz within the container
-      - ${HOME}/docker_yride/ros2_ws/liosam_params.yaml:/docker_yride/other_drivers_ros2_ws/src/LIO-SAM/config/params.yaml:rw
-      # - ${HOME}/.vscode-server:/root/.vscode-server # Added to make it so that the vscode server doesn't need to be installed in the container every time
-      - ${HOME}/yride_env_setup:/yride_env_setup:ro
+      - ${HOME}/docker_yride/ros2_ws/src/liosam_params.yaml:/docker_yride/other_drivers_ros2_ws/src/LIO-SAM/config/params.yaml:rw
+      - ${HOME}/yride_env_setup:/yride_env_setup:ro # Yride environment setup
     environment:
       DISPLAY: "${DISPLAY}" # Needed to display RViz within the container
       # set up sensor hostname IPv4 addresses
@@ -29,9 +31,7 @@ services:
       ROS_DOMAIN_ID: 1
       CONTAINER_NAME: yride_top
       RCUTILS_COLORIZED_OUTPUT: 1 # Allows launch files to print colored text
-      # # Increate UDP buffer size
-      # RMW_FASTRTPS_UDP_RECEIVE_BUFFER_SIZE: 10485760
-    working_dir: /docker_yride/yride_ros2_ws
+    working_dir: /docker_yride/ros2_ws
     stdin_open: true
     tty: true
     network_mode: host
