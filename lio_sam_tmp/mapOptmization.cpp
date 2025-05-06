@@ -171,7 +171,7 @@ public:
             std::bind(&mapOptimization::laserCloudInfoHandler, this, std::placeholders::_1));
         subGPS = create_subscription<nav_msgs::msg::Odometry>(
             gpsTopic, 200,
-            std::bind(&mapOptimization::gpsHandler, this, std::placeholders::_1));
+            std::bind(&mapOptimization::gpsHandlerNavSatFix, this, std::placeholders::_1));
         subLoop = create_subscription<std_msgs::msg::Float64MultiArray>(
             "lio_loop/loop_closure_detection", qos,
             std::bind(&mapOptimization::loopInfoHandler, this, std::placeholders::_1));
@@ -331,7 +331,7 @@ public:
         }
     }
 
-    void gpsHandler(const nav_msgs::msg::Odometry::SharedPtr gpsMsg)
+    void gpsHandlerNavSatFix(const nav_msgs::msg::Odometry::SharedPtr gpsMsg)
     {
         gpsQueue.push_back(*gpsMsg);
     }

@@ -63,7 +63,7 @@ RUN git clone --recursive https://github.com/Y-Ride/inertial-sense-sdk.git && \
 # # Add useful aliases, functions, and environment variables to the bashrc
 # ARG HOST_HOME=/home/yride
 # WORKDIR /yride_env_setup
-# COPY ${HOST_HOME}/yride_env_setup /yride_env_setup
+# COPY --dereference ./yride_env_setup /yride_env_setup
 # RUN ./initial_setup.sh
 
 ###########################################################################################################
@@ -86,4 +86,15 @@ RUN git clone --recursive https://github.com/Y-Ride/inertial-sense-sdk.git && \
 # USER $UNAME
 
 RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc && \
-    echo "source /docker_yride/other_drivers_ros2_ws/install/setup.bash" >> ~/.bashrc
+    echo "source /docker_yride/other_drivers_ros2_ws/install/setup.bash" >> ~/.bashrc && \
+    echo "source /docker_yride/yride_ros2_ws/install/setup.bash" >> ~/.bashrc
+
+# Include the custom environment setup script
+RUN echo "if [ -f /yride_env_setup/custom_env.sh ]; then" >> ~/.bashrc && \
+    echo "  source /yride_env_setup/custom_env.sh" >> ~/.bashrc && \
+    echo "fi" >> ~/.bashrc
+
+# Needed for liorf
+# Move up next time doing big build
+RUN apt install libgeographic-dev -y
+ 

@@ -19,3 +19,10 @@ ros2_ws/log_ouster/
 
 # Ignore .txt files in timestamps_to_txt
 ros2_ws/src/timestamps_to_txt/t*.txt
+
+# Ignore maps for now
+**/maps/**/
+
+# Ignore python cache
+**__pycache__/
+*.pyc

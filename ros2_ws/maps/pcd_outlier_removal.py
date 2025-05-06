@@ -13,10 +13,14 @@ path_to_pcd = args.pcd
 global_map_path = os.path.join(path_to_pcd, "GlobalMap.pcd")
 
 # Load the point cloud
+print("Loading point cloud...")
 global_pcd = o3d.io.read_point_cloud(global_map_path)
 
 # Apply Statistical Outlier Removal
+print("Starting outlier removal...")
+# clean_pcd, ind = global_pcd.remove_statistical_outlier(nb_neighbors=5, std_ratio=50.0)
 clean_pcd, ind = global_pcd.remove_statistical_outlier(nb_neighbors=20, std_ratio=10.0)
+
 
 # Separate inliers and outliers
 inlier_cloud = global_pcd.select_by_index(ind)

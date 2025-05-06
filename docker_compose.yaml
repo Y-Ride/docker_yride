@@ -17,6 +17,7 @@ services:
       - /tmp/.X11-unix:/tmp/.X11-unix # Needed to display RViz within the container
       - ${HOME}/docker_yride/ros2_ws/liosam_params.yaml:/docker_yride/other_drivers_ros2_ws/src/LIO-SAM/config/params.yaml:rw
       # - ${HOME}/.vscode-server:/root/.vscode-server # Added to make it so that the vscode server doesn't need to be installed in the container every time
+      - ${HOME}/yride_env_setup:/yride_env_setup:ro
     environment:
       DISPLAY: "${DISPLAY}" # Needed to display RViz within the container
       # set up sensor hostname IPv4 addresses
@@ -26,6 +27,8 @@ services:
       LIDAR_IP_FRONT: ${LIDAR_STATIC_IP_FRONT}
       LIDAR_IP_BACK: ${LIDAR_STATIC_IP_BACK}
       ROS_DOMAIN_ID: 1
+      CONTAINER_NAME: yride_top
+      RCUTILS_COLORIZED_OUTPUT: 1 # Allows launch files to print colored text
       # # Increate UDP buffer size
       # RMW_FASTRTPS_UDP_RECEIVE_BUFFER_SIZE: 10485760
     working_dir: /docker_yride/yride_ros2_ws
