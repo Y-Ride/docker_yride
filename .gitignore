@@ -13,7 +13,7 @@ ros2_ws/bags/*/
 *.log
 
 # Ignore sensor logs
-ros2_ws/log_ouster/
+**/log_ouster/
 
 **/trash/
 

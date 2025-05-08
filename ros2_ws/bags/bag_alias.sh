@@ -6,7 +6,7 @@ export OUSTER_FRONT_TOPICS="/ouster_front/points /ouster_front/metadata"
 export OUSTER_RIGHT_TOPICS="/ouster_right/points /ouster_right/metadata"
 export OUSTER_LEFT_TOPICS="/ouster_left/points /ouster_left/metadata"
 export OUSTER_BACK_TOPICS="/ouster_back/points /ouster_back/metadata"
-export INERTIAL_SENSE_TOPICS="/inertial_sense/imu_raw /inertial_sense/imu /inertial_sense/odom_ins_ned /inertial_sense/gps1/info /inertial_sense/gps1/pos_vel /inertial_sense/gps1/NavSatFix /inertial_sense/gps2/info /inertial_sense/gps2/pos_vel"
+export INERTIAL_SENSE_TOPICS="/inertial_sense/imu_raw /inertial_sense/imu /inertial_sense/odom_ins_ned /inertial_sense/odom_ins_enu /inertial_sense/gps1/info /inertial_sense/gps1/pos_vel /inertial_sense/gps1/NavSatFix"
 export OTHER_TOPICS="/tf_static /tf"
 
 # Function to record topics based on flags
