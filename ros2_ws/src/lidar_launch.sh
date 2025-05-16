@@ -89,7 +89,7 @@ if [ "$all_flag" = true ] || [ "$top_flag" = true ]; then
         udp_dest:=${UDP_ADDRESS} \
         use_system_default_qos:=${USE_SYSTEM_DEFAULT_QOS} \
         metadata:="$METADATA_FILE_PATH/top_lidar.json" \
-        viz:=$viz_flag \
+        viz:=false \
         ouster_ns:="ouster_top" \
         sensor_frame:="os_sensor_top" \
         lidar_frame:="os_lidar_top" \
@@ -124,6 +124,13 @@ if [ "$all_flag" = true ] || [ "$left_flag" = true ]; then
         imu_port:=$((UDP_LIDAR_PORT + 3)) \
         persist_config:=${SET_LIDAR_PERSIST} \
         > "$LOG_DIR/ouster_left.log" 2>&1 &
+
+    ros2 run tf2_ros static_transform_publisher \
+        --frame-id os_sensor_top \
+        --child-frame-id os_sensor_left \
+        --x 0.09017880252546773 --y 0.7600579556864714 --z -0.2667973327865499 \
+        --qx -0.16166175716485556 --qy 0.3921429595683178 --qz 0.8392065015549289 --qw 0.3403260543645007 \
+        >> "$LOG_DIR/ouster_left.log" 2>&1 &
 fi
 
 # Right
@@ -147,6 +154,13 @@ if [ "$all_flag" = true ] || [ "$right_flag" = true ]; then
         imu_port:=$((UDP_LIDAR_PORT + 5)) \
         persist_config:=${SET_LIDAR_PERSIST} \
         > "$LOG_DIR/ouster_right.log" 2>&1 &
+
+    ros2 run tf2_ros static_transform_publisher \
+        --frame-id os_sensor_top \
+        --child-frame-id os_sensor_right \
+        --x 0.07847588612408217 --y -0.7328592975248958 --z -0.29798150553149555 \
+        --qx -0.14565451134417173 --qy -0.37157075868986944 --qz 0.8457973337117132 --qw -0.35404350706923343 \
+        >> "$LOG_DIR/ouster_right.log" 2>&1 &
 fi
 
 # Front
@@ -170,6 +184,13 @@ if [ "$all_flag" = true ] || [ "$front_flag" = true ]; then
         imu_port:=$((UDP_LIDAR_PORT + 7)) \
         persist_config:=${SET_LIDAR_PERSIST} \
         > "$LOG_DIR/ouster_front.log" 2>&1 &
+    
+    ros2 run tf2_ros static_transform_publisher \
+        --frame-id os_sensor_top \
+        --child-frame-id os_sensor_front \
+        --x 1.762221953004467 --y 0.031395653998010795 --z -0.23664207446855884 \
+        --qx 0.11682054035827495 --qy 0.29901197980482735 --qz 0.3678992311745233 --qw 0.8726940775465323 \
+        >> "$LOG_DIR/ouster_front.log" 2>&1 &
 fi
 
 # Back
@@ -193,6 +214,19 @@ if [ "$all_flag" = true ] || [ "$back_flag" = true ]; then
         imu_port:=$((UDP_LIDAR_PORT + 9)) \
         persist_config:=${SET_LIDAR_PERSIST} \
         > "$LOG_DIR/ouster_back.log" 2>&1 &
+    
+    ros2 run tf2_ros static_transform_publisher \
+        --frame-id os_sensor_top \
+        --child-frame-id os_sensor_back \
+        --x -1.7610962891439355 --y -0.02243506545853049 --z -0.17876566558874363 \
+        --qx -0.24144946126196618 --qy -0.10417180529640005 --qz 0.8914838079012679 --qw 0.3689268394783042 \
+        >> "$LOG_DIR/ouster_back.log" 2>&1 &
+fi
+
+if [ "$viz_flag" = true ]; then
+    echo "Launching Rviz2"
+    rviz2 -d rviz_config/All5LidarTF.rviz \
+        > "$LOG_DIR/rviz.log" 2>&1 &
 fi
 
 echo "Sensors launched. Output is in $LOG_DIR/"

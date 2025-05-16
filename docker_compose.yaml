@@ -15,7 +15,6 @@ services:
       - ${HOME}/docker_yride/ros2_ws/src:/docker_yride/ros2_ws/src:rw
       - ${HOME}/docker_yride/ros2_ws/bags:/docker_yride/ros2_ws/bags:rw
       - ${HOME}/docker_yride/ros2_ws/maps:/docker_yride/ros2_ws/maps:rw
-      - ${HOME}/docker_yride/ros2_ws/rviz_config:/docker_yride/ros2_ws/rviz_config:rw
       - ${HOME}/docker_yride/ros2_ws/log_ouster:/docker_yride/ros2_ws/log_ouster:rw
       - /tmp/.X11-unix:/tmp/.X11-unix # Needed to display RViz within the container
       - ${HOME}/docker_yride/ros2_ws/src/liosam_params.yaml:/docker_yride/other_drivers_ros2_ws/src/LIO-SAM/config/params.yaml:rw
