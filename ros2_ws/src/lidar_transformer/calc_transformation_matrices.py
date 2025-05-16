@@ -42,25 +42,30 @@ def inches_to_meters(inches):
 if __name__ == "__main__":
     # Define translations (x, y, z) and rotations (x, y, z) for each lidar
     # The rotations need to be in the order x, y, and then z all from the global frame
-    is_degrees = True
+    is_degrees = False
+    is_inches = False
     lidar_parameters = {
-    "os_lidar_top":	[0.0, 	    0.0, 		0.0, 		0.0, 		0.0,		0.0],
-    "os_lidar_left":   [-3.5,     	-28.75,	    -9.5, 	    48.9, 	    0.0, 		135.0], 
-    "os_lidar_right":  [-3.5,     	28.75, 	    -9.5,	    -47.6, 	    0.0, 		-135.0],
-    "os_lidar_front":  [-69.0,	    0.0, 		-8.0, 	    0.0, 		-37.6, 	    45.0],
-    "os_lidar_back":   [69.0, 	    0.0, 		-8.0, 	    0.0, 		29.5, 	    135.],
+    # "os_lidar_top":	[0.0, 	    0.0, 		0.0, 		0.0, 		0.0,		0.0],
+    # "os_lidar_left":   [-3.5,     	-28.75,	    -9.5, 	    48.9, 	    0.0, 		135.0], 
+    # "os_lidar_right":  [-3.5,     	28.75, 	    -9.5,	    -47.6, 	    0.0, 		-135.0],
+    # "os_lidar_front":  [-69.0,	    0.0, 		-8.0, 	    0.0, 		-37.6, 	    45.0],
+    # "os_lidar_back":   [69.0, 	    0.0, 		-8.0, 	    0.0, 		29.5, 	    135.],
+    "os_lidar_top2left": [-0.0903388,  -0.732264,  -0.253779,   2.58571, -0.567032, -0.708372],
     }
 
     # Transformation dictionary
     transformations = {}
 
-    flatten = True
+    flatten = False
 
 
     for lidar, params in lidar_parameters.items():
         print(f"{lidar} parameters: {params}")
         rot = rot_x(params[3], is_degrees) @ rot_y(params[4], is_degrees) @ rot_z(params[5], is_degrees)
-        trans = inches_to_meters(np.array([params[:3]]).T)
+        if is_inches:
+            trans = inches_to_meters(np.array([params[:3]]).T)
+        else:
+            trans = np.array([params[:3]]).T
         print(f"Translation: \n{trans}")
         hom = homogeneous_transform(rot, trans)
         if flatten:
