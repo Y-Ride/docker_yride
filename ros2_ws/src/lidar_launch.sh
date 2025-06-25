@@ -5,8 +5,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Check if the current directory is the same as the script directory
 if [ "$(pwd)" != "$SCRIPT_DIR" ]; then
-    echo "Error: This script must be run in the directory: $SCRIPT_DIR"
-    exit 1
+    # echo "Error: This script must be run in the directory: $SCRIPT_DIR"
+    # exit 1
+    echo "Changing to script's directory: $SCRIPT_DIR"
+    cd "$SCRIPT_DIR"
 fi
 
 # Define flags
@@ -72,6 +74,7 @@ SET_LIDAR_PERSIST=false
 UDP_OFFSET=-37.0
 TIMESTAMP_MODE="TIME_FROM_PTP_1588"
 UDP_LIDAR_PORT=7502
+PROC_MASK="PCL|IMU|IMG"     # This controls what topics are published. The options are IMU|PCL|SCAN|IMG|TLM.
 
 METADATA_FILE_PATH="$SCRIPT_DIR/log_ouster/metadata"
 if [ ! -d "$METADATA_FILE_PATH" ]; then
@@ -99,6 +102,7 @@ if [ "$all_flag" = true ] || [ "$top_flag" = true ]; then
         ptp_utc_tai_offset:=${UDP_OFFSET} \
         lidar_port:=${UDP_LIDAR_PORT} \
         imu_port:=$((UDP_LIDAR_PORT + 1)) \
+        proc_mask:=$PROC_MASK \
         persist_config:=${SET_LIDAR_PERSIST} \
         > "$LOG_DIR/ouster_top.log" 2>&1 &
 fi
@@ -122,6 +126,7 @@ if [ "$all_flag" = true ] || [ "$left_flag" = true ]; then
         ptp_utc_tai_offset:=${UDP_OFFSET} \
         lidar_port:=$((UDP_LIDAR_PORT + 2)) \
         imu_port:=$((UDP_LIDAR_PORT + 3)) \
+        proc_mask:=$PROC_MASK \
         persist_config:=${SET_LIDAR_PERSIST} \
         > "$LOG_DIR/ouster_left.log" 2>&1 &
 
@@ -152,6 +157,7 @@ if [ "$all_flag" = true ] || [ "$right_flag" = true ]; then
         ptp_utc_tai_offset:=${UDP_OFFSET} \
         lidar_port:=$((UDP_LIDAR_PORT + 4)) \
         imu_port:=$((UDP_LIDAR_PORT + 5)) \
+        proc_mask:=$PROC_MASK \
         persist_config:=${SET_LIDAR_PERSIST} \
         > "$LOG_DIR/ouster_right.log" 2>&1 &
 
@@ -182,6 +188,7 @@ if [ "$all_flag" = true ] || [ "$front_flag" = true ]; then
         ptp_utc_tai_offset:=${UDP_OFFSET} \
         lidar_port:=$((UDP_LIDAR_PORT + 6)) \
         imu_port:=$((UDP_LIDAR_PORT + 7)) \
+        proc_mask:=$PROC_MASK \
         persist_config:=${SET_LIDAR_PERSIST} \
         > "$LOG_DIR/ouster_front.log" 2>&1 &
     
@@ -212,6 +219,7 @@ if [ "$all_flag" = true ] || [ "$back_flag" = true ]; then
         ptp_utc_tai_offset:=${UDP_OFFSET} \
         lidar_port:=$((UDP_LIDAR_PORT + 8)) \
         imu_port:=$((UDP_LIDAR_PORT + 9)) \
+        proc_mask:=$PROC_MASK \
         persist_config:=${SET_LIDAR_PERSIST} \
         > "$LOG_DIR/ouster_back.log" 2>&1 &
     
@@ -225,8 +233,13 @@ fi
 
 if [ "$viz_flag" = true ]; then
     echo "Launching Rviz2"
-    rviz2 -d rviz_config/All5LidarTF.rviz \
-        > "$LOG_DIR/rviz.log" 2>&1 &
+    if [ "$top_flag" = true ] && [ "$left_flag" = false ] && [ "$right_flag" = false ] && [ "$front_flag" = false ] && [ "$back_flag" = false ]; then
+        RVIZ_FILE_PATH="rviz_config/BasicTopLidar.rviz"
+    else
+        RVIZ_FILE_PATH="rviz_config/All5LidarTF.rviz"
+    fi
+    
+    rviz2 -d "$RVIZ_FILE_PATH" > "$LOG_DIR/rviz.log" 2>&1 &
 fi
 
 echo "Sensors launched. Output is in $LOG_DIR/"

@@ -35,12 +35,12 @@ WORKDIR /docker_yride/other_drivers_ros2_ws/src
 RUN git clone -b ros2 --recurse-submodules https://github.com/ouster-lidar/ouster-ros.git && \
     git clone -b ros2 --recurse-submodules https://github.com/TixiaoShan/LIO-SAM.git
 
+# # The RAW param is thorwing an error. 
+# RUN cd ouster-ros/ouster-ros/config/ && \
+#   sed -i 's/proc_mask: IMU|PCL|SCAN|IMG|RAW/proc_mask: IMU|PCL|SCAN|IMG/' driver_params.yaml && \
+#   sed -i 's/use_system_default_qos: false/use_system_default_qos: true/' driver_params.yaml
+    
 # Change a few minor things in LIO-SAM
-# The RAW param is thorwing an error. 
-RUN cd ouster-ros/ouster-ros/config/ && \
-  sed -i 's/proc_mask: IMU|PCL|SCAN|IMG|RAW/proc_mask: IMU|PCL|SCAN|IMG/' driver_params.yaml && \
-  sed -i 's/use_system_default_qos: false/use_system_default_qos: true/' driver_params.yaml
-
 ADD ros2_ws/src/liosam_params.yaml params.yaml
 RUN mv params.yaml LIO-SAM/config/params.yaml
 
