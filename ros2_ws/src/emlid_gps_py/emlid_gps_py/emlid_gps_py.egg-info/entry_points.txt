@@ -1,0 +1,3 @@
+[console_scripts]
+emlid_gps_py = emlid_gps_py.emlid_gps_py:main
+

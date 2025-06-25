@@ -30,6 +30,8 @@ services:
       ROS_DOMAIN_ID: 1
       CONTAINER_NAME: yride_top
       RCUTILS_COLORIZED_OUTPUT: 1 # Allows launch files to print colored text
+    devices:
+      - "/dev/ttyACM0:/dev/ttyACM0"
     working_dir: /docker_yride/ros2_ws
     stdin_open: true
     tty: true

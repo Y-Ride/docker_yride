@@ -22,3 +22,6 @@
 [submodule "ros2_ws/src/liorf"]
 	path = ros2_ws/src/liorf
 	url = git@github.com:Y-Ride/liorf.git
+[submodule "ros2_ws/src/emlid_gps/external/CppLinuxSerial"]
+	path = ros2_ws/src/emlid_gps/external/CppLinuxSerial
+	url = https://github.com/gbmhunter/CppLinuxSerial/tree/master
