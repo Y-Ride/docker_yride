@@ -16,6 +16,20 @@ using namespace mn::CppLinuxSerial;
 class EmlidGps : public rclcpp::Node
 {
 public:
+
+  enum class NmeaType
+  {
+    GGA,                            // Time, position and fix type data
+    GPGSA, GLGSA, GAGSA, GBGSA,     // GPS receiver operating mode, satellites used in the position solution, and DOP values
+    GST,                            // Position error statistics
+    GPGSV, GLGSV, GAGSV, GBGSV,     // Number of satellites in view, ID numbers, elevation, azimuth, & SNR values
+    RMC,                            // Position, velocity, and time
+    VTG,                            // Course and speed information relative to the ground
+    ZDA,                            // UTC day, month, and year, and local time zone offset
+    EBP,                            // This is a custom Emlid NMEA message. RTK base position
+    UNKNOWN
+  };
+
   EmlidGps(const std::string & name,
     const std::string & ns,
     const rclcpp::NodeOptions & options)
@@ -76,8 +90,9 @@ public:
       {
         std::string data = "";
         serialPort.Read(data);
-        if (!data.empty())
+        if (!data.empty() && data[0] == '$')
         {
+          RCLCPP_DEBUG(this->get_logger(), "Raw sentence: \n%s", data.c_str());
           std_msgs::msg::String msg_raw;
           msg_raw.data = data;
           
@@ -86,11 +101,13 @@ public:
           size_t end = data.find("\r\n");
           sensor_msgs::msg::NavSatFix fix_msg;
           rclcpp::Time gps_time;
+
           bool do_publish = true;
+
           while (end != std::string::npos)
           {
             std::string sentence = data.substr(start, end-start);
-            if (!sentence.empty())
+            if (!sentence.empty() && sentence[0] == '$')
             {
               std_msgs::msg::String msg;
               msg.data = sentence;
@@ -104,25 +121,36 @@ public:
                 fields.push_back(field);
               }
 
-              if (fields[0] == "$GNGGA")
+              switch (getNmeaType(fields[0]))
               {
-                if (!EmlidGps::parseGNGGA(fields, fix_msg))
-                {
-                  do_publish = false;
-                }
-              }
-              else if (fields[0] == "$GNRMC") 
-              {
-                if (!EmlidGps::parseGNRMC(fields, gps_time))
-                {
-                  do_publish = false;
-                }
-              }
-              else 
-              {
-                RCLCPP_WARN(this->get_logger(), "Invalid nmea sentence type! Sentence was \"%s\"", sentence.c_str());
-                do_publish = false;
-                break;
+                case NmeaType::GGA:
+                  if (!EmlidGps::parseGGA(fields, fix_msg))
+                  {
+                    RCLCPP_WARN(this->get_logger(), "Parsing of GGA sentence failed: %s", sentence.c_str());
+                    do_publish = false;
+                  }
+                  break;
+                case NmeaType::RMC:
+                  if (!EmlidGps::parseRMC(fields, gps_time))
+                  {
+                    RCLCPP_WARN(this->get_logger(), "Parsing of RMC sentence failed: %s", sentence.c_str());
+                    do_publish = false;
+                  }
+                  break;
+                case NmeaType::GST:
+                  if (!EmlidGps::parseGST(fields, fix_msg))
+                  {
+                    RCLCPP_WARN(this->get_logger(), "Parsing of GST sentence failed: %s", sentence.c_str());
+                    do_publish = false;
+                  }
+                  break;
+                case NmeaType::UNKNOWN:
+                  RCLCPP_DEBUG(this->get_logger(), "Got unknown/unimplemented NMEA type: %s", sentence.c_str());
+                  break;
+                default:
+                  RCLCPP_WARN(this->get_logger(), "Unknown NMEA case");
+                  break;
+                
               }
             }
             start = end + 2;  // Skip past "\r\n"
@@ -132,25 +160,25 @@ public:
           fix_msg.header.stamp = gps_time;
           fix_msg.header.frame_id = "gps_link";
 
+          publisher_raw_->publish(msg_raw);
+          
           if (do_publish)
-          {  
-            publisher_raw_->publish(msg_raw);
+          {
             gps_pub_->publish(fix_msg);
-            
             // Convert lat, lon, alt to relative position and publish Ground Truth Path
             double x_e, y_n, z_u;
             geo_converter_->Forward(fix_msg.latitude, fix_msg.longitude, fix_msg.altitude, x_e, y_n, z_u);
-
+            
             geometry_msgs::msg::PoseStamped pose;
             pose.header.stamp = fix_msg.header.stamp;
             pose.header.frame_id = frame_id;
-
+            
             pose.pose.position.x = x_e;
             pose.pose.position.y = y_n;
             pose.pose.position.z = z_u;
-
+            
             pose.pose.orientation.w = 1.0; // No rotation
-
+            
             // Check if there are any subscribers
             if (path_pub_->get_subscription_count() > 0) 
             {
@@ -164,12 +192,31 @@ public:
               path_.poses.clear();
             }
           }
+          
         }
       } catch (const std::exception &e) 
       {
         RCLCPP_WARN(this->get_logger(), "Serial read error: %s", e.what());
       }
     }
+  }
+  
+private:
+
+  NmeaType getNmeaType(const std::string & type_str)
+  {
+    std::string sub_str = type_str.substr(3); // Removes first three characters
+    if (sub_str == "GGA") return NmeaType::GGA;
+    // else if (sub_str == "GSA")
+    // {
+    //   if (type_str == "GPGSA") return NmeaType::GPGSA;
+    //   if (type_str == "GLGSA") return NmeaType::GLGSA;
+    //   if (type_str == "GAGSA") return NmeaType::GAGSA;
+    //   if (type_str == "GLGSA") return NmeaType::GLGSA;
+    // }
+    else if (sub_str == "GST") return NmeaType::GST;
+    else if (sub_str == "RMC") return NmeaType::RMC;
+    else return NmeaType::UNKNOWN;
   }
 
   double convertNMEACoordinate(const std::string& nmea_coord, const std::string& direction) {
@@ -187,7 +234,7 @@ public:
     return decimal;
   }
   
-  bool parseGNGGA(const std::vector<std::string>& fields, sensor_msgs::msg::NavSatFix& msg) 
+  bool parseGGA(const std::vector<std::string>& fields, sensor_msgs::msg::NavSatFix& msg) 
   {
 
     if (fields.size() < 10) return false;
@@ -202,7 +249,7 @@ public:
     return true;
   }
   
-  bool parseGNRMC(const std::vector<std::string>& fields, rclcpp::Time& ros_time_out) 
+  bool parseRMC(const std::vector<std::string>& fields, rclcpp::Time& ros_time_out) 
   {
 
     if (fields.size() < 10 || fields[2] != "A") return false;
@@ -238,7 +285,39 @@ public:
     return true;
   }
 
-private:
+  bool parseGST(const std::vector<std::string>& fields, sensor_msgs::msg::NavSatFix& msg)
+  {
+    if (fields.size() < 9) return false;
+
+    try 
+    {
+      RCLCPP_INFO(this->get_logger(), "lat std: %s, lon std: %s, alt std: %s", 
+                                      fields[6].c_str(), fields[7].c_str(), fields[8].c_str());
+      double lat_std = std::stod(fields[6]);
+      double lon_std = std::stod(fields[7]);
+      // Remove checksum part from alt_std
+      std::string alt_field = fields[8];
+      size_t asterisk_pos = alt_field.find('*');
+      if (asterisk_pos != std::string::npos) {
+          alt_field = alt_field.substr(0, asterisk_pos);
+      }
+      double alt_std = std::stod(alt_field);
+
+      msg.position_covariance[0] = lat_std * lat_std;
+      msg.position_covariance[4] = lon_std * lon_std;
+      msg.position_covariance[8] = alt_std * alt_std;
+
+      msg.position_covariance_type = sensor_msgs::msg::NavSatFix::COVARIANCE_TYPE_DIAGONAL_KNOWN;
+    }
+    catch (const std::exception& e)
+    {
+      RCLCPP_WARN(this->get_logger(), "Error with converting GST fields: %s", e.what());
+    }
+
+    return true;
+
+  }
+
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher_raw_;
   rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr gps_pub_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_;
