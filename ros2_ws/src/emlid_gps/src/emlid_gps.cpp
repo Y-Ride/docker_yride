@@ -303,9 +303,9 @@ private:
       }
       double alt_std = std::stod(alt_field);
 
-      msg.position_covariance[0] = lat_std * lat_std;
-      msg.position_covariance[4] = lon_std * lon_std;
-      msg.position_covariance[8] = alt_std * alt_std;
+      msg.position_covariance[0] = lon_std * lon_std; // E
+      msg.position_covariance[4] = lat_std * lat_std; // N
+      msg.position_covariance[8] = alt_std * alt_std; // U
 
       msg.position_covariance_type = sensor_msgs::msg::NavSatFix::COVARIANCE_TYPE_DIAGONAL_KNOWN;
     }
