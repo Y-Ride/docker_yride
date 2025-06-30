@@ -10,10 +10,11 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 find_package(CppLinuxSerial REQUIRED)
-# find_package(libnmea REQUIRED)
+# find_package(GeographicLib REQUIRED)
 
-# add_subdirectory(external/libnmea)
 
 add_executable(emlid_gps src/emlid_gps.cpp)
 target_include_directories(emlid_gps PUBLIC
@@ -25,9 +26,11 @@ ament_target_dependencies(
   "rclcpp"
   "std_msgs"
   "sensor_msgs"
+  "nav_msgs"
+  "geometry_msgs"
 )
 
-target_link_libraries(${PROJECT_NAME} CppLinuxSerial::CppLinuxSerial)
+target_link_libraries(${PROJECT_NAME} CppLinuxSerial::CppLinuxSerial Geographic)
 
 install(TARGETS emlid_gps
   DESTINATION lib/${PROJECT_NAME})

@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y nano \
     ros-${ROS_DISTRO}-vision-opencv \
     ros-${ROS_DISTRO}-xacro \
     ros-${ROS_DISTRO}-rviz2 \
+    ros-${ROS_DISTRO}-geodesy \
     libgeographic-dev \
     cmake \
     vim \

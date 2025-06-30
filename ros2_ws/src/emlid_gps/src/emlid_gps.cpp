@@ -3,6 +3,9 @@
 #include "std_msgs/msg/string.hpp"
 #include "sensor_msgs/msg/nav_sat_fix.hpp"
 #include "sensor_msgs/msg/nav_sat_status.hpp"
+#include "nav_msgs/msg/path.hpp"
+#include "geometry_msgs/msg/pose_stamped.hpp"
+#include <GeographicLib/LocalCartesian.hpp>
 #include <CppLinuxSerial/SerialPort.hpp>
 #include <thread>
 #include <atomic>
@@ -13,26 +16,53 @@ using namespace mn::CppLinuxSerial;
 class EmlidGps : public rclcpp::Node
 {
 public:
-  EmlidGps(): Node("emlid_gps"),
+  EmlidGps(const std::string & name,
+    const std::string & ns,
+    const rclcpp::NodeOptions & options)
+  : Node(name, ns, options),
   serialPort("/dev/ttyACM0", BaudRate::B_57600, NumDataBits::EIGHT, Parity::NONE, NumStopBits::ONE),
   stop_flag_(false)
   {
-    publisher_raw_ = this->create_publisher<std_msgs::msg::String>("emlid_nmea", 10);
+
+    // Set up parameters
+    this->declare_parameter("origin_lat", 40.246266148);
+    this->declare_parameter("origin_lon", -111.648571401);
+    this->declare_parameter("origin_alt", 1403.8386);
+    this->declare_parameter("frame_id", "map");
+    double origin_lat, origin_lon, origin_alt;
+    
+    this->get_parameter("origin_lat", origin_lat);
+    this->get_parameter("origin_lon", origin_lon);
+    this->get_parameter("origin_alt", origin_alt);
+    this->get_parameter("frame_id", frame_id);
+
+    geo_converter_ = std::make_unique<GeographicLib::LocalCartesian>(origin_lat, origin_lon, origin_alt);
+    path_.header.frame_id = frame_id;
+
+    // Publishers
+    publisher_raw_ = this->create_publisher<std_msgs::msg::String>("nmea", 10);
+    gps_pub_ = this->create_publisher<sensor_msgs::msg::NavSatFix>("NavSatFix", 10);
+    path_pub_ = this->create_publisher<nav_msgs::msg::Path>("path_rel", 10);
   
     // Serial port setup
     serialPort.SetTimeout(100);
-    try{
+    try
+    {
       serialPort.Open();
-    } catch (const std::exception &e) {
+    } 
+    catch (const std::exception &e) 
+    {
       RCLCPP_ERROR(this->get_logger(), "%s\nShutting Down", e.what());
       rclcpp::shutdown();
     }
 
     read_thread_ = std::thread(&EmlidGps::readLoop, this);
   }
+
   ~EmlidGps(){
     stop_flag_ = true;
-    if (read_thread_.joinable()) {
+    if (read_thread_.joinable()) 
+    {
       read_thread_.join();
     }
     serialPort.Close();
@@ -42,21 +72,21 @@ public:
   {
     while (rclcpp::ok() && !stop_flag_)
     {
-      try {
+      try 
+      {
         std::string data = "";
         serialPort.Read(data);
         if (!data.empty())
         {
           std_msgs::msg::String msg_raw;
           msg_raw.data = data;
-          publisher_raw_->publish(msg_raw);
-
+          
           // Parse Data for NavSatFix and Relative Location
           size_t start = 0;
           size_t end = data.find("\r\n");
           sensor_msgs::msg::NavSatFix fix_msg;
           rclcpp::Time gps_time;
-          bool do_publish = false;
+          bool do_publish = true;
           while (end != std::string::npos)
           {
             std::string sentence = data.substr(start, end-start);
@@ -64,43 +94,79 @@ public:
             {
               std_msgs::msg::String msg;
               msg.data = sentence;
-              std::cout << "Start = " << start << ", Sentence = \"" << sentence << "\"" << std::endl;
-
+              
               std::stringstream ss(sentence);
               std::string field;
               std::vector<std::string> fields;
-  
-              while (std::getline(ss, field, ',')) {
+              
+              while (std::getline(ss, field, ',')) 
+              {
                 fields.push_back(field);
               }
 
-              if (fields[0] == "$GNGGA"){
+              if (fields[0] == "$GNGGA")
+              {
                 if (!EmlidGps::parseGNGGA(fields, fix_msg))
                 {
                   do_publish = false;
                 }
               }
-              else if (fields[0] == "$GNRMC") {
+              else if (fields[0] == "$GNRMC") 
+              {
                 if (!EmlidGps::parseGNRMC(fields, gps_time))
                 {
                   do_publish = false;
                 }
               }
-              else {
+              else 
+              {
                 RCLCPP_WARN(this->get_logger(), "Invalid nmea sentence type! Sentence was \"%s\"", sentence.c_str());
+                do_publish = false;
+                break;
               }
             }
             start = end + 2;  // Skip past "\r\n"
             end = data.find("\r\n", start);
           }
+
           fix_msg.header.stamp = gps_time;
           fix_msg.header.frame_id = "gps_link";
+
           if (do_publish)
           {  
-            gps_pub_enu_->publish(fix_msg);
+            publisher_raw_->publish(msg_raw);
+            gps_pub_->publish(fix_msg);
+            
+            // Convert lat, lon, alt to relative position and publish Ground Truth Path
+            double x_e, y_n, z_u;
+            geo_converter_->Forward(fix_msg.latitude, fix_msg.longitude, fix_msg.altitude, x_e, y_n, z_u);
+
+            geometry_msgs::msg::PoseStamped pose;
+            pose.header.stamp = fix_msg.header.stamp;
+            pose.header.frame_id = frame_id;
+
+            pose.pose.position.x = x_e;
+            pose.pose.position.y = y_n;
+            pose.pose.position.z = z_u;
+
+            pose.pose.orientation.w = 1.0; // No rotation
+
+            // Check if there are any subscribers
+            if (path_pub_->get_subscription_count() > 0) 
+            {
+              path_.poses.push_back(pose);
+              path_.header.stamp = fix_msg.header.stamp;
+              path_pub_->publish(path_);
+            } 
+            else 
+            {
+              // No subscribers — clear the path
+              path_.poses.clear();
+            }
           }
         }
-      } catch (const std::exception &e) {
+      } catch (const std::exception &e) 
+      {
         RCLCPP_WARN(this->get_logger(), "Serial read error: %s", e.what());
       }
     }
@@ -121,9 +187,9 @@ public:
     return decimal;
   }
   
-  bool parseGNGGA(const std::vector<std::string>& fields, sensor_msgs::msg::NavSatFix& msg) {
-    
-  
+  bool parseGNGGA(const std::vector<std::string>& fields, sensor_msgs::msg::NavSatFix& msg) 
+  {
+
     if (fields.size() < 10) return false;
   
     msg.latitude = convertNMEACoordinate(fields[2], fields[3]);
@@ -136,7 +202,9 @@ public:
     return true;
   }
   
-  bool parseGNRMC(const std::vector<std::string>& fields, rclcpp::Time& ros_time_out) {
+  bool parseGNRMC(const std::vector<std::string>& fields, rclcpp::Time& ros_time_out) 
+  {
+
     if (fields.size() < 10 || fields[2] != "A") return false;
   
     std::string time_str = fields[1];   // e.g. "174628.80"
@@ -172,17 +240,24 @@ public:
 
 private:
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher_raw_;
-  rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr gps_pub_enu_;
+  rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr gps_pub_;
+  rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_;
+  nav_msgs::msg::Path path_;
+  std::unique_ptr<GeographicLib::LocalCartesian> geo_converter_;
   SerialPort serialPort;
   std::thread read_thread_;
   std::atomic<bool> stop_flag_;
+  std::string frame_id;
 
 };
 
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<EmlidGps>());
+  rclcpp::NodeOptions options;
+  // options.arguments(std::vector<std::string>{});
+  // options.set_namespace("emlid");
+  rclcpp::spin(std::make_shared<EmlidGps>("emlid_gps", "emlid", options));
   rclcpp::shutdown();
   return 0;
 }
