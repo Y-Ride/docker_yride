@@ -74,7 +74,7 @@ SET_LIDAR_PERSIST=false
 UDP_OFFSET=-37.0
 TIMESTAMP_MODE="TIME_FROM_PTP_1588"
 UDP_LIDAR_PORT=7502
-PROC_MASK="PCL|IMU|IMG"     # This controls what topics are published. The options are IMU|PCL|SCAN|IMG|TLM.
+PROC_MASK="PCL|IMU"     # This controls what topics are published. The options are IMU|PCL|SCAN|IMG|TLM.
 
 METADATA_FILE_PATH="$SCRIPT_DIR/log_ouster/metadata"
 if [ ! -d "$METADATA_FILE_PATH" ]; then

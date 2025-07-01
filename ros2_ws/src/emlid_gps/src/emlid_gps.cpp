@@ -35,7 +35,9 @@ public:
     const rclcpp::NodeOptions & options)
   : Node(name, ns, options),
   serialPort("/dev/ttyACM0", BaudRate::B_57600, NumDataBits::EIGHT, Parity::NONE, NumStopBits::ONE),
-  stop_flag_(false)
+  stop_flag_(false),
+  STATUS_RTK_FIXED(4),
+  STATUS_RTK_FLOAT(5)
   {
 
     // Set up parameters
@@ -238,14 +240,35 @@ private:
   {
 
     if (fields.size() < 10) return false;
-  
+    
+    static int previous_fix_status = sensor_msgs::msg::NavSatStatus::STATUS_NO_FIX;
+
     msg.latitude = convertNMEACoordinate(fields[2], fields[3]);
     msg.longitude = convertNMEACoordinate(fields[4], fields[5]);
     msg.altitude = std::stod(fields[9]);
 
-    msg.status.status = sensor_msgs::msg::NavSatStatus::STATUS_FIX;
+    int fix_status = std::stod(fields[6]);
+    
+    if (fix_status == 1 || fix_status == 2)
+      msg.status.status = sensor_msgs::msg::NavSatStatus::STATUS_FIX;
+    else if (fix_status == 4) // RTK fixed
+      msg.status.status = STATUS_RTK_FIXED;
+    else if (fix_status == 5)
+      msg.status.status = STATUS_RTK_FLOAT;
+    else
+      msg.status.status = sensor_msgs::msg::NavSatStatus::STATUS_NO_FIX;
+    
+    if (previous_fix_status != msg.status.status)
+    {
+      previous_fix_status = msg.status.status;
+      RCLCPP_INFO(this->get_logger(), "Changed GPS fix to -> %s", (msg.status.status == sensor_msgs::msg::NavSatStatus::STATUS_FIX) ? "SINGLE" 
+                                                                : (msg.status.status == STATUS_RTK_FIXED) ? "RTK FIX" 
+                                                                : (msg.status.status == STATUS_RTK_FLOAT) ? "RTK FLOAT"
+                                                                : "No Fix");
+    }
+
     msg.status.service = sensor_msgs::msg::NavSatStatus::SERVICE_GPS;
-  
+    
     return true;
   }
   
@@ -291,7 +314,7 @@ private:
 
     try 
     {
-      RCLCPP_INFO(this->get_logger(), "lat std: %s, lon std: %s, alt std: %s", 
+      RCLCPP_DEBUG(this->get_logger(), "lat std: %s, lon std: %s, alt std: %s", 
                                       fields[6].c_str(), fields[7].c_str(), fields[8].c_str());
       double lat_std = std::stod(fields[6]);
       double lon_std = std::stod(fields[7]);
@@ -327,6 +350,9 @@ private:
   std::thread read_thread_;
   std::atomic<bool> stop_flag_;
   std::string frame_id;
+
+  int8_t STATUS_RTK_FIXED;
+  int8_t STATUS_RTK_FLOAT;
 
 };
 
