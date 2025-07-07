@@ -1,4 +1,4 @@
-# Other destros may not be supported with all of the packages listed below
+# Other distros may not be supported with all of the packages listed below
 ARG ROS_DISTRO=humble 
 
 # This is an auto generated Dockerfile for ros:ros-base
@@ -35,13 +35,8 @@ RUN python3 -m pip install numpy matplotlib opencv-python open3d ouster-sdk
 WORKDIR /docker_yride/other_drivers_ros2_ws/src
 RUN git clone -b ros2 --recurse-submodules https://github.com/ouster-lidar/ouster-ros.git && \
     git clone -b ros2 --recurse-submodules https://github.com/TixiaoShan/LIO-SAM.git
-
-# # The RAW param is thorwing an error. 
-# RUN cd ouster-ros/ouster-ros/config/ && \
-#   sed -i 's/proc_mask: IMU|PCL|SCAN|IMG|RAW/proc_mask: IMU|PCL|SCAN|IMG/' driver_params.yaml && \
-#   sed -i 's/use_system_default_qos: false/use_system_default_qos: true/' driver_params.yaml
-    
-# Change a few minor things in LIO-SAM
+  
+# Change LIO-SAM configs
 ADD ros2_ws/src/liosam_params.yaml params.yaml
 RUN mv params.yaml LIO-SAM/config/params.yaml
 
@@ -71,30 +66,6 @@ RUN cd .. && . /opt/ros/${ROS_DISTRO}/setup.sh && \
 #     sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
 #     sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list && apt-get update && apt-get install -y nvidia-container-toolkit
 
-# # Add useful aliases, functions, and environment variables to the bashrc
-# ARG HOST_HOME=/home/yride
-# WORKDIR /yride_env_setup
-# COPY --dereference ./yride_env_setup /yride_env_setup
-# RUN ./initial_setup.sh
-
-###########################################################################################################
-#                                        Do this Last                                                     #
-###########################################################################################################
-# Changes ownership of the container to the host user so that files created in the
-# container are owned by the host user. This is necessary for the host user to be able to
-# delete or modify files created in the container after the container has stopped.
-# Define build arguments for UID and GID (Set in docker_compose.yml)
-# Following arguments are passed from docker_compose.yml
-# ARG UID 
-# ARG GID
-# ARG UNAME
-
-# # Create group and user with provided UID and GID
-# RUN groupadd -g $GID $UNAME && \
-#     useradd -m -u $UID -g $GID -s /bin/bash $UNAME
-
-# # Run container as the newly created user
-# USER $UNAME
 
 RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc && \
     echo "source /docker_yride/other_drivers_ros2_ws/install/setup.bash" >> ~/.bashrc && \
