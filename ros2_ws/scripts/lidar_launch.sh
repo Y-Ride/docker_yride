@@ -56,10 +56,14 @@ fi
 
 # Create the log_ouster directory if it doesn't exist
 LOG_DIR="$SCRIPT_DIR/log_ouster"
-if [ ! -d "$LOG_DIR" ]; then
-    mkdir "$LOG_DIR"
-    echo "Created log directory: $LOG_DIR"
+METADATA_FILE_PATH="$LOG_DIR/metadata"
+
+if [ -d "$LOG_DIR" ]; then
+    rm -r $LOG_DIR
+    echo "Recreating log directory: $LOG_DIR"
 fi
+
+mkdir -p "$METADATA_FILE_PATH"
 
 # Variables common to all sensors
     # Retrieve the primary link-local IP address in the 169.254.x.x range 
@@ -76,11 +80,6 @@ TIMESTAMP_MODE="TIME_FROM_PTP_1588"
 UDP_LIDAR_PORT=7502
 PROC_MASK="PCL|IMU"     # This controls what topics are published. The options are IMU|PCL|SCAN|IMG|TLM.
 
-METADATA_FILE_PATH="$SCRIPT_DIR/log_ouster/metadata"
-if [ ! -d "$METADATA_FILE_PATH" ]; then
-    mkdir "$METADATA_FILE_PATH"
-    echo "Created metadata directory: $METADATA_FILE_PATH"
-fi
 
 # Launch the sensors and redirect outputs to log files
 
