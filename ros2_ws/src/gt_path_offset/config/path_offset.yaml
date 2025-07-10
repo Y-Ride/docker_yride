@@ -1,0 +1,6 @@
+/**:
+  ros__parameters:
+    gt_path_topic: "/emlid/path_rel"
+    robot_path_topic: "/liorf/mapping/path"
+    offset_path_topic: "/gt_offset_path"
+    offset_calculation_points: 100

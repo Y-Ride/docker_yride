@@ -21,6 +21,7 @@ RUN apt-get update && apt-get install -y nano \
     ros-${ROS_DISTRO}-rviz2 \
     ros-${ROS_DISTRO}-geodesy \
     libgeographic-dev \
+    libpcap-dev \
     cmake \
     vim \
     tmux \

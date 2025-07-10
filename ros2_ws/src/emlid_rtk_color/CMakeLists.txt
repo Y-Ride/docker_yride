@@ -11,6 +11,7 @@ find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
 # find_package(emlid_gps REQUIRED)
 # find_package(GeographicLib REQUIRED)
 find_package(PCL REQUIRED COMPONENTS io)
@@ -36,6 +37,7 @@ ament_target_dependencies(
   "visualization_msgs"
   # "emlid_gps"
   "std_srvs"
+  "nav_msgs"
 )
 
 install(TARGETS emlid_rtk_color
