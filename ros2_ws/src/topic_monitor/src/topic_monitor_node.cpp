@@ -118,7 +118,7 @@ private:
         }
 
         std::filesystem::path file_path = pkg_share_dir;
-        file_path /= topics_file_; // This will now typically be 'topics.yaml'
+        file_path /= topics_file_; 
 
         RCLCPP_INFO(this->get_logger(), "Attempting to load topics from: %s", file_path.string().c_str());
 
@@ -160,39 +160,42 @@ private:
     }
 
 
-    void subscribe_to_topic(const std::string &topic_name, const std::string &message_type)
+     void subscribe_to_topic(const std::string &topic_name, const std::string &message_type)
     {
         rclcpp::QoS qos_profile(10); // Standard QoS profile
 
-        // Use the proper constructor for TopicInfo
-        auto info_it = topic_infos_.emplace(topic_name, TopicInfo(topic_name, message_type)).first;
+        // Create a shared_ptr to TopicInfo on the heap
+        std::shared_ptr<TopicInfo> current_info = std::make_shared<TopicInfo>(topic_name, message_type);
+        
+        // Add the shared_ptr to the vector
+        topic_infos_.push_back(current_info); 
 
-        // Use a lambda for the generic callback
-        auto callback = [this, info_it](std::shared_ptr<rclcpp::SerializedMessage> msg) {
-            info_it->second.message_count++;
-            info_it->second.received_message_since_start = true;
+        // The lambda captures current_info by value (copy of shared_ptr),
+        // ensuring the TopicInfo object's lifetime is managed correctly.
+        auto callback = [this, current_info](std::shared_ptr<rclcpp::SerializedMessage> msg) { 
+            current_info->message_count++; // Use -> operator for shared_ptr
+            current_info->received_message_since_start = true; // Use -> operator
 
-            // Attempt to extract timestamp from the message
             rclcpp::Time stamp;
-            if (extract_timestamp(msg, info_it->second.message_type, stamp))
+            if (extract_timestamp(msg, current_info->message_type, stamp)) // Use -> operator
             {
-                if (!info_it->second.last_timestamp.nanoseconds()) // First message received
+                if (!current_info->last_timestamp.nanoseconds()) // First message received for this topic
                 {
-                    info_it->second.last_timestamp = stamp;
-                    if (!initial_timestamp_.nanoseconds())
+                    current_info->last_timestamp = stamp;
+                    if (!initial_timestamp_.nanoseconds()) // Set initial reference timestamp if it's the very first message
                     {
-                        initial_timestamp_ = stamp; // Set initial reference timestamp from the first message of any topic
+                        initial_timestamp_ = stamp; 
                     }
                 }
                 else
                 {
-                    info_it->second.last_timestamp = stamp;
+                    current_info->last_timestamp = stamp;
                 }
             }
         };
 
-        // Create a generic subscription
-        info_it->second.subscription = this->create_generic_subscription(
+        // Store the subscription directly in the TopicInfo object via the shared_ptr
+        current_info->subscription = this->create_generic_subscription(
             topic_name,
             message_type,
             qos_profile,
@@ -255,42 +258,38 @@ private:
     {
         timer_->cancel(); // Stop the timer
 
-        RCLCPP_INFO(this->get_logger(), "");
         RCLCPP_INFO(this->get_logger(), "--------------------------------------");
         RCLCPP_INFO(this->get_logger(), "---    Topic Monitoring Results    ---");
         RCLCPP_INFO(this->get_logger(), "--------------------------------------\n");
         
-        // bool all_ok = true;
-
-        for (auto const & [topic_name, info] : topic_infos_)
+        for (auto const & info_ptr : topic_infos_) // Iterate over shared_ptrs
         {
-            if (info.message_count == 0)
+            // Use -> to access members of TopicInfo via the shared_ptr
+            if (info_ptr->message_count == 0)
             {
                 RCLCPP_ERROR(this->get_logger(), "Topic: %s (Type: %s) - ERROR: No messages published!\n",
-                             topic_name.c_str(), info.message_type.c_str());
-                // all_ok = false;
+                             info_ptr->topic_name.c_str(), info_ptr->message_type.c_str());
             }
             else
             {
                 RCLCPP_INFO(this->get_logger(), "Topic: %s (Type: %s) - Messages received: %d",
-                            topic_name.c_str(), info.message_type.c_str(), info.message_count);
+                            info_ptr->topic_name.c_str(), info_ptr->message_type.c_str(), info_ptr->message_count);
                 
-                if (info.last_timestamp.nanoseconds() != 0 && initial_timestamp_.nanoseconds() != 0)
+                if (info_ptr->last_timestamp.nanoseconds() != 0 && initial_timestamp_.nanoseconds() != 0)
                 {
-                    double time_diff = std::abs((info.last_timestamp - initial_timestamp_).seconds());
+                    double time_diff = std::abs((info_ptr->last_timestamp - initial_timestamp_).seconds());
                     if (time_diff > 1.0)
                     {
-                        RCLCPP_ERROR(this->get_logger(), "Topic: %s - ERROR: Timestamps not synchronized! Latest: %.9f, Reference: %.9f (Diff: %.3f s)\n",
-                                     topic_name.c_str(), info.last_timestamp.seconds(), initial_timestamp_.seconds(), time_diff);
-                        // all_ok = false;
+                        RCLCPP_WARN(this->get_logger(), "Topic: %s - ERROR: Timestamps not synchronized! Latest: %.9f, Reference: %.9f \033[31m(Diff: %.3f s)\033[0m\n",
+                                     info_ptr->topic_name.c_str(), info_ptr->last_timestamp.seconds(), initial_timestamp_.seconds(), time_diff);
                     }
                     else
                     {
                         RCLCPP_INFO(this->get_logger(), "Topic: %s - Timestamps synchronized (Diff: %.3f s)\n",
-                                    topic_name.c_str(), time_diff);
+                                    info_ptr->topic_name.c_str(), time_diff);
                     }
                 } else {
-                    RCLCPP_WARN(this->get_logger(), "Topic: %s - Could not check timestamp synchronization. No header found or first message not received properly.\n", topic_name.c_str());
+                    RCLCPP_WARN(this->get_logger(), "Topic: %s - Could not check timestamp synchronization. No header found or first message not received properly.\n", info_ptr->topic_name.c_str());
                 }
             }
         }
@@ -298,11 +297,12 @@ private:
         RCLCPP_INFO(this->get_logger(), "-------------------------------------");
         RCLCPP_INFO(this->get_logger(), "---      Monitoring Complete      ---");
         RCLCPP_INFO(this->get_logger(), "-------------------------------------");
-        rclcpp::shutdown(); // Shutdown ROS 2
+        rclcpp::shutdown();
     }
 
     std::string topics_file_;
-    std::map<std::string, TopicInfo> topic_infos_;
+    // std::map<std::string, TopicInfo> topic_infos_;
+    std::vector<std::shared_ptr<TopicInfo>> topic_infos_;
     rclcpp::TimerBase::SharedPtr timer_;
     rclcpp::Time initial_timestamp_;
     std::shared_ptr<rclcpp::executors::MultiThreadedExecutor> executor_;
