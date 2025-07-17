@@ -13,7 +13,6 @@ find_package(sensor_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(CppLinuxSerial REQUIRED)
-# find_package(GeographicLib REQUIRED)
 
 
 add_executable(emlid_gps src/emlid_gps.cpp)
@@ -34,6 +33,14 @@ target_link_libraries(${PROJECT_NAME} CppLinuxSerial::CppLinuxSerial Geographic)
 
 install(TARGETS emlid_gps
   DESTINATION lib/${PROJECT_NAME})
+
+# Install launch files
+install(DIRECTORY launch
+  DESTINATION share/${PROJECT_NAME})
+
+# Install config files
+install(DIRECTORY config
+  DESTINATION share/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

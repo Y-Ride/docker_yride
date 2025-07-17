@@ -1,0 +1,9 @@
+# emlid_gps/config/emlid_params.yaml
+emlid_gps:  # This should match the 'name' of your Node in the launch file
+  ros__parameters:
+    origin_lat: 40.246266148
+    origin_lon: -111.648571401
+    origin_alt: 1403.8386
+    frame_id: "map"
+    device_port: "/dev/ttyACM0"
+    baud_rate: 57600

@@ -210,7 +210,8 @@ bool EmlidGps::parseGGA(const std::vector<std::string>& fields, sensor_msgs::msg
 
   if (fields.size() < 10) return false;
   
-  static int previous_fix_status = sensor_msgs::msg::NavSatStatus::STATUS_NO_FIX;
+  static int previous_fix_status_ = sensor_msgs::msg::NavSatStatus::STATUS_NO_FIX;
+  static rclcpp::Time last_fix_status_change_time_ = msg.header.stamp;
 
   msg.latitude = convertNMEACoordinate(fields[2], fields[3]);
   msg.longitude = convertNMEACoordinate(fields[4], fields[5]);
@@ -227,13 +228,30 @@ bool EmlidGps::parseGGA(const std::vector<std::string>& fields, sensor_msgs::msg
   else
     msg.status.status = sensor_msgs::msg::NavSatStatus::STATUS_NO_FIX;
   
-  if (previous_fix_status != msg.status.status)
+  if (previous_fix_status_ != msg.status.status)
   {
-    previous_fix_status = msg.status.status;
-    RCLCPP_INFO(this->get_logger(), "Changed GPS fix to -> %s", (msg.status.status == sensor_msgs::msg::NavSatStatus::STATUS_FIX) ? "SINGLE" 
-                                                              : (msg.status.status == EmlidGps::STATUS_RTK_FIXED) ? "RTK FIX" 
-                                                              : (msg.status.status == EmlidGps::STATUS_RTK_FLOAT) ? "RTK FLOAT"
-                                                              : "No Fix");
+    rclcpp::Time current_time = msg.header.stamp;
+    rclcpp::Duration duration = current_time - last_fix_status_change_time_;
+    double seconds_since_last_change = duration.seconds();
+
+    previous_fix_status_ = msg.status.status;
+    // RCLCPP_INFO(this->get_logger(), "Changed GPS fix to -> %s", (msg.status.status == sensor_msgs::msg::NavSatStatus::STATUS_FIX) ? "\033[1;31mSINGLE\033[0m" 
+    //                                                           : (msg.status.status == EmlidGps::STATUS_RTK_FIXED) ? "\033[1;32mRTK FIX\033[0m" 
+    //                                                           : (msg.status.status == EmlidGps::STATUS_RTK_FLOAT) ? "\033[1;33mRTK FLOAT\033[0m"
+    //                                                           : "No Fix");
+    // Log the change with the time difference
+    RCLCPP_INFO(
+      this->get_logger(),
+      "Was %s for %.2fs. Changed GPS fix to -> %s",
+      (previous_fix_status_ == sensor_msgs::msg::NavSatStatus::STATUS_FIX) ? "SINGLE"
+      : (previous_fix_status_ == EmlidGps::STATUS_RTK_FIXED) ? "RTK FIX"
+      : (previous_fix_status_ == EmlidGps::STATUS_RTK_FLOAT) ? "RTK FLOAT"
+      : "No Fix",
+      seconds_since_last_change,
+      (msg.status.status == sensor_msgs::msg::NavSatStatus::STATUS_FIX) ? "\033[1;31mSINGLE\033[0m"
+      : (msg.status.status == EmlidGps::STATUS_RTK_FIXED) ? "\033[1;32mRTK FIX\033[0m"
+      : (msg.status.status == EmlidGps::STATUS_RTK_FLOAT) ? "\033[1;33mRTK FLOAT\033[0m"
+      : "No Fix");
   }
 
   msg.status.service = sensor_msgs::msg::NavSatStatus::SERVICE_GPS;
