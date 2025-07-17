@@ -233,9 +233,9 @@ fi
 if [ "$viz_flag" = true ]; then
     echo "Launching Rviz2"
     if [ "$top_flag" = true ] && [ "$left_flag" = false ] && [ "$right_flag" = false ] && [ "$front_flag" = false ] && [ "$back_flag" = false ]; then
-        RVIZ_FILE_PATH="rviz_config/BasicTopLidar.rviz"
+        RVIZ_FILE_PATH="../src/rviz_config/BasicTopLidar.rviz"
     else
-        RVIZ_FILE_PATH="rviz_config/All5LidarTF.rviz"
+        RVIZ_FILE_PATH="../src/rviz_config/All5LidarTF.rviz"
     fi
     
     rviz2 -d "$RVIZ_FILE_PATH" > "$LOG_DIR/rviz.log" 2>&1 &
