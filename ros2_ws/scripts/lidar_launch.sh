@@ -79,7 +79,7 @@ UDP_OFFSET=-37.0
 TIMESTAMP_MODE="TIME_FROM_PTP_1588"
 UDP_LIDAR_PORT=7502
 PROC_MASK="PCL|IMU"     # This controls what topics are published. The options are IMU|PCL|SCAN|IMG|TLM.
-
+POINT_TYPE="original"      # Options to use for cart are 'original' and 'native'
 
 # Launch the sensors and redirect outputs to log files
 
@@ -102,6 +102,7 @@ if [ "$all_flag" = true ] || [ "$top_flag" = true ]; then
         lidar_port:=${UDP_LIDAR_PORT} \
         imu_port:=$((UDP_LIDAR_PORT + 1)) \
         proc_mask:=$PROC_MASK \
+        point_type:=${POINT_TYPE} \
         persist_config:=${SET_LIDAR_PERSIST} \
         > "$LOG_DIR/ouster_top.log" 2>&1 &
 fi
@@ -126,6 +127,7 @@ if [ "$all_flag" = true ] || [ "$left_flag" = true ]; then
         lidar_port:=$((UDP_LIDAR_PORT + 2)) \
         imu_port:=$((UDP_LIDAR_PORT + 3)) \
         proc_mask:=$PROC_MASK \
+        point_type:=${POINT_TYPE} \
         persist_config:=${SET_LIDAR_PERSIST} \
         > "$LOG_DIR/ouster_left.log" 2>&1 &
 
@@ -157,6 +159,7 @@ if [ "$all_flag" = true ] || [ "$right_flag" = true ]; then
         lidar_port:=$((UDP_LIDAR_PORT + 4)) \
         imu_port:=$((UDP_LIDAR_PORT + 5)) \
         proc_mask:=$PROC_MASK \
+        point_type:=${POINT_TYPE} \
         persist_config:=${SET_LIDAR_PERSIST} \
         > "$LOG_DIR/ouster_right.log" 2>&1 &
 
@@ -188,6 +191,7 @@ if [ "$all_flag" = true ] || [ "$front_flag" = true ]; then
         lidar_port:=$((UDP_LIDAR_PORT + 6)) \
         imu_port:=$((UDP_LIDAR_PORT + 7)) \
         proc_mask:=$PROC_MASK \
+        point_type:=${POINT_TYPE} \
         persist_config:=${SET_LIDAR_PERSIST} \
         > "$LOG_DIR/ouster_front.log" 2>&1 &
     
@@ -219,6 +223,7 @@ if [ "$all_flag" = true ] || [ "$back_flag" = true ]; then
         lidar_port:=$((UDP_LIDAR_PORT + 8)) \
         imu_port:=$((UDP_LIDAR_PORT + 9)) \
         proc_mask:=$PROC_MASK \
+        point_type:=${POINT_TYPE} \
         persist_config:=${SET_LIDAR_PERSIST} \
         > "$LOG_DIR/ouster_back.log" 2>&1 &
     
