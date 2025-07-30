@@ -43,6 +43,7 @@ struct TopicInfo
     std::string topic_name;
     std::string message_type;
     int message_count = 0;
+    rclcpp::Time first_timestamp;
     rclcpp::Time last_timestamp;
     bool received_message_since_start = false;
     std::shared_ptr<rclcpp::GenericSubscription> subscription;
@@ -74,6 +75,7 @@ public:
 
         // Timer to stop listening and report results after 5 seconds
         RCLCPP_INFO(this->get_logger(), "Starting 5 second timer to count messaged published from topics...");
+        monitoring_start_time_ = this->now();
         timer_ = this->create_wall_timer(
             5s, std::bind(&TopicMonitor::report_and_shutdown, this));
 
@@ -181,16 +183,17 @@ private:
             {
                 if (!current_info->last_timestamp.nanoseconds()) // First message received for this topic
                 {
-                    current_info->last_timestamp = stamp;
-                    if (!initial_timestamp_.nanoseconds()) // Set initial reference timestamp if it's the very first message
-                    {
-                        initial_timestamp_ = stamp; 
-                    }
+                    current_info->first_timestamp = stamp;
+                    // if (!initial_timestamp_.nanoseconds()) // Set initial reference timestamp if it's the very first message
+                    // {
+                    //     initial_timestamp_ = stamp; 
+                    //     RCLCPP_INFO(this->get_logger(), "Got initial timestamp of %ld from topic %s", initial_timestamp_.nanoseconds(), current_info->topic_name.c_str());
+                    // }
                 }
-                else
-                {
+                // else
+                // {
                     current_info->last_timestamp = stamp;
-                }
+                // }
             }
         };
 
@@ -257,10 +260,14 @@ private:
     void report_and_shutdown()
     {
         timer_->cancel(); // Stop the timer
+        rclcpp::Time ref_time(0);
 
         RCLCPP_INFO(this->get_logger(), "--------------------------------------");
         RCLCPP_INFO(this->get_logger(), "---    Topic Monitoring Results    ---");
         RCLCPP_INFO(this->get_logger(), "--------------------------------------\n");
+
+        // A threshold for "synchronization" difference. This can be tuned.
+        const double SYNC_THRESHOLD_SECONDS = 0.1; // e.g., 100 milliseconds
         
         for (auto const & info_ptr : topic_infos_) // Iterate over shared_ptrs
         {
@@ -275,18 +282,39 @@ private:
                 RCLCPP_INFO(this->get_logger(), "Topic: %s (Type: %s) - Messages received: %d",
                             info_ptr->topic_name.c_str(), info_ptr->message_type.c_str(), info_ptr->message_count);
                 
-                if (info_ptr->last_timestamp.nanoseconds() != 0 && initial_timestamp_.nanoseconds() != 0)
+                if (info_ptr->last_timestamp.nanoseconds() != 0)
                 {
-                    double time_diff = std::abs((info_ptr->last_timestamp - initial_timestamp_).seconds());
-                    if (time_diff > 1.0)
+                    if (ref_time.nanoseconds() == 0) // First message with non zero timestamp
                     {
-                        RCLCPP_WARN(this->get_logger(), "Topic: %s - ERROR: Timestamps not synchronized! Latest: %.9f, Reference: %.9f \033[31m(Diff: %.3f s)\033[0m\n",
-                                     info_ptr->topic_name.c_str(), info_ptr->last_timestamp.seconds(), initial_timestamp_.seconds(), time_diff);
+                        ref_time = info_ptr->last_timestamp;
+                        RCLCPP_INFO(this->get_logger(), "Topic: %s - Set as reference timestamp\n",
+                                        info_ptr->topic_name.c_str());
                     }
                     else
                     {
-                        RCLCPP_INFO(this->get_logger(), "Topic: %s - Timestamps synchronized (Diff: %.3f s)\n",
-                                    info_ptr->topic_name.c_str(), time_diff);
+                        double time_diff = std::abs((info_ptr->last_timestamp - ref_time).seconds());
+                        if (time_diff > SYNC_THRESHOLD_SECONDS)
+                        {
+                            RCLCPP_WARN(this->get_logger(), "Topic: %s - WARNING: Timestamps potentially out of sync. Latest message time (%.9f) is %.3f seconds from reference topic time (%.9f). Expected within %.3f s. \033[31m(Possibly unsynchronized or very low frequency)\033[0m\n",
+                                         info_ptr->topic_name.c_str(), info_ptr->last_timestamp.seconds(), time_diff, ref_time.seconds(), SYNC_THRESHOLD_SECONDS);
+                        }
+                        else
+                        {
+                            RCLCPP_INFO(this->get_logger(), "Topic: %s - Timestamps appear synchronized with end time difference %.3f s\n",
+                                        info_ptr->topic_name.c_str(), time_diff);
+                        }
+    
+                        // Additionally, you could check if the first message received for this topic
+                        // is relatively close to the overall monitoring start time,
+                        // indicating it started publishing early enough.
+                        // if (info_ptr->first_timestamp.nanoseconds() != 0) {
+                        //     double time_diff_from_start = std::abs((info_ptr->first_timestamp - monitoring_start_time_).seconds());
+                        //     if (time_diff_from_start > 1.0) // Example threshold for start time
+                        //     {
+                        //         RCLCPP_WARN(this->get_logger(), "Topic: %s - WARNING: First message published %.3f seconds after monitoring started. (First: %.9f, Start: %.9f)\n",
+                        //                     info_ptr->topic_name.c_str(), time_diff_from_start, info_ptr->first_timestamp.seconds(), monitoring_start_time_.seconds());
+                        //     }
+                        // }
                     }
                 } else {
                     RCLCPP_WARN(this->get_logger(), "Topic: %s - Could not check timestamp synchronization. No header found or first message not received properly.\n", info_ptr->topic_name.c_str());
@@ -304,7 +332,7 @@ private:
     // std::map<std::string, TopicInfo> topic_infos_;
     std::vector<std::shared_ptr<TopicInfo>> topic_infos_;
     rclcpp::TimerBase::SharedPtr timer_;
-    rclcpp::Time initial_timestamp_;
+    rclcpp::Time monitoring_start_time_;
     std::shared_ptr<rclcpp::executors::MultiThreadedExecutor> executor_;
     std::thread spin_thread_;
 };

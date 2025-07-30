@@ -211,7 +211,7 @@ bool EmlidGps::parseGGA(const std::vector<std::string>& fields, sensor_msgs::msg
   if (fields.size() < 10) return false;
   
   static int previous_fix_status_ = sensor_msgs::msg::NavSatStatus::STATUS_NO_FIX;
-  static rclcpp::Time last_fix_status_change_time_ = msg.header.stamp;
+  static rclcpp::Time last_fix_status_change_time_ = this->now();
 
   msg.latitude = convertNMEACoordinate(fields[2], fields[3]);
   msg.longitude = convertNMEACoordinate(fields[4], fields[5]);
@@ -230,11 +230,12 @@ bool EmlidGps::parseGGA(const std::vector<std::string>& fields, sensor_msgs::msg
   
   if (previous_fix_status_ != msg.status.status)
   {
-    rclcpp::Time current_time = msg.header.stamp;
+    rclcpp::Time current_time = this->now();
     rclcpp::Duration duration = current_time - last_fix_status_change_time_;
     double seconds_since_last_change = duration.seconds();
+    last_fix_status_change_time_ = current_time;
+    // RCLCPP_INFO(this->get_logger(), "Current time %f, last time %f, duration %f", current_time.seconds(), last_fix_status_change_time_.seconds(), duration.seconds());
 
-    previous_fix_status_ = msg.status.status;
     // RCLCPP_INFO(this->get_logger(), "Changed GPS fix to -> %s", (msg.status.status == sensor_msgs::msg::NavSatStatus::STATUS_FIX) ? "\033[1;31mSINGLE\033[0m" 
     //                                                           : (msg.status.status == EmlidGps::STATUS_RTK_FIXED) ? "\033[1;32mRTK FIX\033[0m" 
     //                                                           : (msg.status.status == EmlidGps::STATUS_RTK_FLOAT) ? "\033[1;33mRTK FLOAT\033[0m"
@@ -252,7 +253,8 @@ bool EmlidGps::parseGGA(const std::vector<std::string>& fields, sensor_msgs::msg
       : (msg.status.status == EmlidGps::STATUS_RTK_FIXED) ? "\033[1;32mRTK FIX\033[0m"
       : (msg.status.status == EmlidGps::STATUS_RTK_FLOAT) ? "\033[1;33mRTK FLOAT\033[0m"
       : "No Fix");
-  }
+    }
+    previous_fix_status_ = msg.status.status;
 
   msg.status.service = sensor_msgs::msg::NavSatStatus::SERVICE_GPS;
   
