@@ -184,16 +184,8 @@ private:
                 if (!current_info->last_timestamp.nanoseconds()) // First message received for this topic
                 {
                     current_info->first_timestamp = stamp;
-                    // if (!initial_timestamp_.nanoseconds()) // Set initial reference timestamp if it's the very first message
-                    // {
-                    //     initial_timestamp_ = stamp; 
-                    //     RCLCPP_INFO(this->get_logger(), "Got initial timestamp of %ld from topic %s", initial_timestamp_.nanoseconds(), current_info->topic_name.c_str());
-                    // }
                 }
-                // else
-                // {
-                    current_info->last_timestamp = stamp;
-                // }
+                current_info->last_timestamp = stamp;
             }
         };
 
@@ -207,8 +199,6 @@ private:
 
     bool extract_timestamp(std::shared_ptr<rclcpp::SerializedMessage> msg, const std::string& message_type, rclcpp::Time& timestamp)
     {
-        // Get the introspection type support for the message type
-        // const rosidl_message_type_support_t * type_support = nullptr;
         std::string package_name = message_type.substr(0, message_type.find('/'));
         std::string msg_name = message_type.substr(message_type.find_last_of('/') + 1);
 
@@ -234,9 +224,6 @@ private:
             timestamp = img_msg.header.stamp;
             return true;
         }
-        // Add more message types with headers as needed
-        // #   - sensor_msgs/msg/NavSatFix
-        // #   - sensor_msgs/msg/PointCloud2
         else if (message_type == "sensor_msgs/msg/NavSatFix") {
             sensor_msgs::msg::NavSatFix navsatfix_msg;
             rclcpp::Serialization<sensor_msgs::msg::NavSatFix> serializer;
@@ -251,6 +238,7 @@ private:
             timestamp = point_msg.header.stamp;
             return true;
         }
+        // Add more messages as needed
 
         RCLCPP_WARN_ONCE(this->get_logger(), "Cannot extract timestamp for message type: %s. No specific deserializer implemented.", message_type.c_str());
         return false;
@@ -268,7 +256,8 @@ private:
 
         // A threshold for "synchronization" difference. This can be tuned.
         const double SYNC_THRESHOLD_SECONDS = 0.1; // e.g., 100 milliseconds
-        
+        int num_warn = 0;
+        int num_error = 0;
         for (auto const & info_ptr : topic_infos_) // Iterate over shared_ptrs
         {
             // Use -> to access members of TopicInfo via the shared_ptr
@@ -276,6 +265,7 @@ private:
             {
                 RCLCPP_ERROR(this->get_logger(), "Topic: %s (Type: %s) - ERROR: No messages published!\n",
                              info_ptr->topic_name.c_str(), info_ptr->message_type.c_str());
+                num_error++;
             }
             else
             {
@@ -297,31 +287,26 @@ private:
                         {
                             RCLCPP_WARN(this->get_logger(), "Topic: %s - WARNING: Timestamps potentially out of sync. Latest message time (%.9f) is %.3f seconds from reference topic time (%.9f). Expected within %.3f s. \033[31m(Possibly unsynchronized or very low frequency)\033[0m\n",
                                          info_ptr->topic_name.c_str(), info_ptr->last_timestamp.seconds(), time_diff, ref_time.seconds(), SYNC_THRESHOLD_SECONDS);
+                            num_warn++;
                         }
                         else
                         {
                             RCLCPP_INFO(this->get_logger(), "Topic: %s - Timestamps appear synchronized with end time difference %.3f s\n",
                                         info_ptr->topic_name.c_str(), time_diff);
                         }
-    
-                        // Additionally, you could check if the first message received for this topic
-                        // is relatively close to the overall monitoring start time,
-                        // indicating it started publishing early enough.
-                        // if (info_ptr->first_timestamp.nanoseconds() != 0) {
-                        //     double time_diff_from_start = std::abs((info_ptr->first_timestamp - monitoring_start_time_).seconds());
-                        //     if (time_diff_from_start > 1.0) // Example threshold for start time
-                        //     {
-                        //         RCLCPP_WARN(this->get_logger(), "Topic: %s - WARNING: First message published %.3f seconds after monitoring started. (First: %.9f, Start: %.9f)\n",
-                        //                     info_ptr->topic_name.c_str(), time_diff_from_start, info_ptr->first_timestamp.seconds(), monitoring_start_time_.seconds());
-                        //     }
-                        // }
                     }
                 } else {
                     RCLCPP_WARN(this->get_logger(), "Topic: %s - Could not check timestamp synchronization. No header found or first message not received properly.\n", info_ptr->topic_name.c_str());
+                    num_error++;
                 }
             }
         }
-
+        // \033[0m -> Reset
+        // \033[31m -> Red
+        // \033[32m -> Green
+        // \033[33m -> Yellow
+        RCLCPP_INFO(this->get_logger(), "Warnings: %s%d%s, Errors: %s%d%s", (num_warn > 0) ? "\033[33m" : "\033[32m", num_warn, "\033[0m", // if >0 then yellow else green
+                                                                            (num_error > 0) ? "\033[31m" : "\033[32m", num_error, "\033[0m"); // if >0 then red else green
         RCLCPP_INFO(this->get_logger(), "-------------------------------------");
         RCLCPP_INFO(this->get_logger(), "---      Monitoring Complete      ---");
         RCLCPP_INFO(this->get_logger(), "-------------------------------------");
@@ -329,7 +314,6 @@ private:
     }
 
     std::string topics_file_;
-    // std::map<std::string, TopicInfo> topic_infos_;
     std::vector<std::shared_ptr<TopicInfo>> topic_infos_;
     rclcpp::TimerBase::SharedPtr timer_;
     rclcpp::Time monitoring_start_time_;
@@ -344,8 +328,6 @@ int main(int argc, char *argv[])
     // The node will manage its own spinning via the MultiThreadedExecutor in a separate thread.
     // main will just wait for ROS to shutdown, which is triggered by report_and_shutdown().
     node->start_monitoring();
-    // rclcpp::spin(node); // Correct way to keep the main thread alive and let executor spin
-    // After rclcpp::spin() returns (due to shutdown), the node's destructor will join spin_thread_.
 
     while (rclcpp::ok()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Sleep briefly to avoid busy-waiting
