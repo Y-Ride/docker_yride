@@ -9,6 +9,7 @@
 # Bag files are too large for github.
 # If they need to be shared, upload to box and share the link.
 ros2_ws/bags/*/
+data_byu
 *.json
 *.log
 

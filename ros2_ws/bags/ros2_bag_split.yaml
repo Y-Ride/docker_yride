@@ -1,3 +1,0 @@
-output_bags:
-  - uri: splitted_bag
-    topics: [/inertial_sense/imu_raw, /ouster_top/points]

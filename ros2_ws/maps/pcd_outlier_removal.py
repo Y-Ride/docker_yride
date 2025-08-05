@@ -5,16 +5,18 @@ import copy
 
 # Parse the arguments
 parser = argparse.ArgumentParser()
-parser.add_argument("pcd", help="Path to the folder containing GlobalMap.pcd", type=str)
+parser.add_argument("pcd", help="Path to the pcd file to be cleaned up", type=str)
 args = parser.parse_args()
 path_to_pcd = args.pcd
 
 # Construct full path to the PCD file
-global_map_path = os.path.join(path_to_pcd, "GlobalMap.pcd")
-
+filename = os.path.basename(path_to_pcd)  # 'my.pcd'
+dirname = os.path.dirname(path_to_pcd)    # './test/folder'
+cleaned_filename = f"Cleaned_{filename}"      # 'cleaned_my.pcd'
+cleaned_path = os.path.join(dirname, cleaned_filename)
 # Load the point cloud
 print("Loading point cloud...")
-global_pcd = o3d.io.read_point_cloud(global_map_path)
+global_pcd = o3d.io.read_point_cloud(path_to_pcd)
 
 # Apply Statistical Outlier Removal
 print("Starting outlier removal...")
@@ -37,8 +39,7 @@ o3d.visualization.draw_geometries([colored_inlier_cloud, outlier_cloud])
 response = input("Save the cleaned point cloud? (y/[n]): ")
 if response.lower() == 'y':
     # Save the cleaned point cloud
-    cleaned_pcd_path = os.path.join(path_to_pcd, "Cleaned_GlobalMap.pcd")
-    o3d.io.write_point_cloud(cleaned_pcd_path, inlier_cloud)
-    print(f"Cleaned point cloud saved to {cleaned_pcd_path}")
+    o3d.io.write_point_cloud(cleaned_path, inlier_cloud)
+    print(f"Cleaned point cloud saved to {cleaned_path}")
 else:
     print("Cleaned point cloud not saved.")
