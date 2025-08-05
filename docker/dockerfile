@@ -33,7 +33,7 @@ RUN apt-get update && apt-get install -y nano \
 RUN python3 -m pip install numpy matplotlib opencv-python open3d ouster-sdk 
 
 # Install Ouster and LIO-SAM
-WORKDIR /docker_yride/other_drivers_ros2_ws/src
+WORKDIR /root/other_drivers_ros2_ws/src
 RUN git clone -b ros2 --recurse-submodules https://github.com/ouster-lidar/ouster-ros.git && \
     git clone -b ros2 --recurse-submodules https://github.com/TixiaoShan/LIO-SAM.git
   
@@ -54,13 +54,28 @@ RUN git clone --recursive https://github.com/Y-Ride/inertial-sense-sdk.git && \
     ./inertial-sense-sdk/scripts/build_ros2.sh
 
 # Build LIO-RF and LIORF-Localization in the src directory
-WORKDIR /docker_yride/ros2_ws/src
+WORKDIR /root/ros2_ws/src
 RUN git clone -b liorf-ros2 --recurse-submodules https://github.com/Y-Ride/liorf.git && \
     git clone -b liorf_localization-ros2 --recurse-submodules https://github.com/Y-Ride/liorf_localization.git
-RUN cd .. && . /opt/ros/${ROS_DISTRO}/setup.sh && \
+
+WORKDIR /root/ros2_ws
+RUN . /opt/ros/${ROS_DISTRO}/setup.sh && \
     colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-select liorf
-RUN cd .. && . /opt/ros/${ROS_DISTRO}/setup.sh && \
+RUN . /opt/ros/${ROS_DISTRO}/setup.sh && \
     colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-select liorf_localization
+
+# Copy in rest of custom ros2 packages and build them
+COPY ros2_ws/src/emlid_gps ./src/emlid_gps
+COPY ros2_ws/src/emlid_rtk_color ./src/emlid_rtk_color
+COPY ros2_ws/src/topic_monitor ./src/topic_monitor
+
+RUN cd src/emlid_gps/external/CppLinuxSerial && \
+    rm -rf build && mkdir build && cd build && \
+    cmake .. && \
+    make && \
+    make install
+RUN . /opt/ros/${ROS_DISTRO}/setup.sh && \
+    colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-select emlid_gps emlid_rtk_color topic_monitor
 
 # RUN curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
 #     && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
@@ -69,8 +84,8 @@ RUN cd .. && . /opt/ros/${ROS_DISTRO}/setup.sh && \
 
 
 RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc && \
-    echo "source /docker_yride/other_drivers_ros2_ws/install/setup.bash" >> ~/.bashrc && \
-    echo "source /docker_yride/ros2_ws/install/setup.bash" >> ~/.bashrc
+    echo "source /root/other_drivers_ros2_ws/install/setup.bash" >> ~/.bashrc && \
+    echo "source /root/ros2_ws/install/setup.bash" >> ~/.bashrc
 
 # Include the custom environment setup script
 RUN echo "if [ -f /yride_env_setup/custom_env.sh ]; then" >> ~/.bashrc && \
