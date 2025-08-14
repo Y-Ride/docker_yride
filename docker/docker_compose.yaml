@@ -7,12 +7,12 @@ services:
     image: yride_all_together
     container_name: yride_all_together
     volumes:
-      - ${HOME}/docker_yride/ros2_ws/src:/docker_yride/ros2_ws/src:rw
+      - ../ros2_ws/src:/docker_yride/ros2_ws/src:rw
       - ${HOME}/data_byu/bags:/docker_yride/ros2_ws/bags:rw
       - ${HOME}/data_byu/maps:/docker_yride/ros2_ws/maps:rw
       - ${HOME}/docker_yride/ros2_ws/scripts:/docker_yride/ros2_ws/scripts:rw
       - /tmp/.X11-unix:/tmp/.X11-unix # Needed to display RViz within the container
-      - ${HOME}/docker_yride/ros2_ws/src/liosam_params.yaml:/docker_yride/other_drivers_ros2_ws/src/LIO-SAM/config/params.yaml:rw
+      - ../ros2_ws/src/liosam_params.yaml:/docker_yride/other_drivers_ros2_ws/src/LIO-SAM/config/params.yaml:rw
       - ${HOME}/yride_env_setup:/yride_env_setup:ro # Yride environment setup
     environment:
       DISPLAY: "${DISPLAY}" # Needed to display RViz within the container
@@ -25,10 +25,13 @@ services:
       ROS_DOMAIN_ID: 1
       CONTAINER_NAME: yride_top
       RCUTILS_COLORIZED_OUTPUT: 1 # Allows launch files to print colored text
-      XDG_RUNTIME_DIR: "/tmp/runtime-root" # For Rviz2
-    devices:
-      - "/dev/dri:/dev/dri" # For Rviz2
-      - "/dev/ttyACM0:/dev/ttyACM0"
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: all
+      # XDG_RUNTIME_DIR: "/tmp/runtime-root" # For Rviz2
+    # devices:
+      # - "/dev/dri:/dev/dri" # For Rviz2
+      # - "/dev/ttyACM0:/dev/ttyACM0"
+    runtime: nvidia
     working_dir: /docker_yride/ros2_ws
     stdin_open: true
     tty: true
