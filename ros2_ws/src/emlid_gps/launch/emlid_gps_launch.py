@@ -11,7 +11,7 @@ def generate_launch_description():
     config_dir = os.path.join(get_package_share_directory('emlid_gps'), 'config')
     param_file = os.path.join(config_dir, 'emlid_params.yaml')
 
-    log_dir = '/docker_yride/ros2_ws/src/log_emlid'
+    log_dir = '/root/ros2_ws/src/emlid_gps/log_emlid'
 
     def remove_directory_contents_and_self(path):
         # Iterate through the directory tree in reverse order (bottom-up)

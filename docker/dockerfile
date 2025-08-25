@@ -1,8 +1,5 @@
 # Other distros may not be supported with all of the packages listed below
 ARG ROS_DISTRO=humble 
-
-# This is an auto generated Dockerfile for ros:ros-base
-# generated from docker_images_ros2/create_ros_image.Dockerfile.em
 FROM ros:${ROS_DISTRO}
 
 # nvidia-container-runtime
@@ -11,28 +8,33 @@ FROM ros:${ROS_DISTRO}
 # ENV NVIDIA_DRIVER_CAPABILITIES \
 #     ${NVIDIA_DRIVER_CAPABILITIES:+$NVIDIA_DRIVER_CAPABILITIES,}graphics
 
-# install nano and pip
-RUN apt-get update && apt-get install -y nano \
-    ros-${ROS_DISTRO}-gtsam \
-    ros-${ROS_DISTRO}-perception-pcl \
-    ros-${ROS_DISTRO}-pcl-msgs \
-    ros-${ROS_DISTRO}-vision-opencv \
-    ros-${ROS_DISTRO}-xacro \
-    ros-${ROS_DISTRO}-rviz2 \
-    ros-${ROS_DISTRO}-geodesy \
-    libgeographic-dev \
-    libpcap-dev \
-    cmake \
-    vim \
-    tmux \
-    python3-pip \
+# System dependencies
+RUN apt-get update && apt-get install -y \
+        nano \
+        vim \
+        cmake \
+        sshpass \
+        libgeographic-dev \
+        libpcap-dev \
+        python3-pip \
     && pip3 install --upgrade pip \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Segmentation Libraries
+# --- Install ROS dependencies ---
+RUN apt-get update && apt-get install -y \
+        ros-${ROS_DISTRO}-gtsam \
+        ros-${ROS_DISTRO}-perception-pcl \
+        ros-${ROS_DISTRO}-pcl-msgs \
+        ros-${ROS_DISTRO}-vision-opencv \
+        ros-${ROS_DISTRO}-xacro \
+        ros-${ROS_DISTRO}-rviz2 \
+        ros-${ROS_DISTRO}-geodesy \
+    && rm -rf /var/lib/apt/lists/*
+
+# --- Install Segmentation Libraries ---
 RUN python3 -m pip install numpy matplotlib opencv-python open3d ouster-sdk 
 
-# Install Ouster and LIO-SAM
+# --- Install Ouster and LIO-SAM ---
 WORKDIR /root/other_drivers_ros2_ws/src
 RUN git clone -b ros2 --recurse-submodules https://github.com/ouster-lidar/ouster-ros.git && \
     git clone -b ros2 --recurse-submodules https://github.com/TixiaoShan/LIO-SAM.git
@@ -48,23 +50,25 @@ RUN cd .. && . /opt/ros/${ROS_DISTRO}/setup.sh && \
 RUN cd .. && . /opt/ros/${ROS_DISTRO}/setup.sh && \
     colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-select lio_sam
 
-# Install Inertial Sense SDK to be able to read the custom messages from the imu
+# --- Install Inertial Sense SDK ---
+# Enables custom messages to be read from the imu
 # The build_ros2.sh script also runs colcon build on the inertial sense packages only
 RUN git clone --recursive https://github.com/Y-Ride/inertial-sense-sdk.git && \
     ./inertial-sense-sdk/scripts/build_ros2.sh
 
-# Build LIO-RF and LIORF-Localization in the src directory
+# --- Install LIO-RF and LIORF-Localization ---
 WORKDIR /root/ros2_ws/src
 RUN git clone -b liorf-ros2 --recurse-submodules https://github.com/Y-Ride/liorf.git && \
     git clone -b liorf_localization-ros2 --recurse-submodules https://github.com/Y-Ride/liorf_localization.git
 
+# Build each one separately
 WORKDIR /root/ros2_ws
 RUN . /opt/ros/${ROS_DISTRO}/setup.sh && \
     colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-select liorf
 RUN . /opt/ros/${ROS_DISTRO}/setup.sh && \
     colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-select liorf_localization
 
-# Copy in rest of custom ros2 packages and build them
+# --- Copy in rest of custom ros2 packages and build them ---
 COPY ros2_ws/src/emlid_gps ./src/emlid_gps
 COPY ros2_ws/src/emlid_rtk_color ./src/emlid_rtk_color
 COPY ros2_ws/src/topic_monitor ./src/topic_monitor
@@ -82,12 +86,12 @@ RUN . /opt/ros/${ROS_DISTRO}/setup.sh && \
 #     sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
 #     sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list && apt-get update && apt-get install -y nvidia-container-toolkit
 
-
+# --- Source ROS2 ---
 RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc && \
     echo "source /root/other_drivers_ros2_ws/install/setup.bash" >> ~/.bashrc && \
     echo "source /root/ros2_ws/install/setup.bash" >> ~/.bashrc
 
-# Include the custom environment setup script
+# --- Source Custom Environment ---
 RUN echo "if [ -f /yride_env_setup/custom_env.sh ]; then" >> ~/.bashrc && \
     echo "  source /yride_env_setup/custom_env.sh" >> ~/.bashrc && \
     echo "fi" >> ~/.bashrc
