@@ -19,9 +19,11 @@
 [submodule "ros2_ws/src/liorf_localization"]
 	path = ros2_ws/src/liorf_localization
 	url = git@github.com:Y-Ride/liorf_localization.git
+	branch=liorf_localization-ros2
 [submodule "ros2_ws/src/liorf"]
 	path = ros2_ws/src/liorf
 	url = git@github.com:Y-Ride/liorf.git
+	branch=liorf-ros2
 [submodule "ros2_ws/src/emlid_gps/external/CppLinuxSerial"]
 	path = ros2_ws/src/emlid_gps/external/CppLinuxSerial
 	url = https://github.com/gbmhunter/CppLinuxSerial.git

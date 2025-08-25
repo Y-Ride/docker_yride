@@ -27,3 +27,6 @@ ros2_ws/src/timestamps_to_txt/t*.txt
 # Ignore python cache
 **__pycache__/
 *.pyc
+
+# Ignore docker compose computer specific files
+*.extra.yaml
