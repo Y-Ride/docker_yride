@@ -2,12 +2,6 @@
 ARG ROS_DISTRO=humble 
 FROM ros:${ROS_DISTRO}
 
-# nvidia-container-runtime
-# ENV NVIDIA_VISIBLE_DEVICES \
-#     ${NVIDIA_VISIBLE_DEVICES:-all}
-# ENV NVIDIA_DRIVER_CAPABILITIES \
-#     ${NVIDIA_DRIVER_CAPABILITIES:+$NVIDIA_DRIVER_CAPABILITIES,}graphics
-
 # System dependencies
 RUN apt-get update && apt-get install -y \
         nano \
@@ -17,6 +11,7 @@ RUN apt-get update && apt-get install -y \
         libgeographic-dev \
         libpcap-dev \
         python3-pip \
+        pcl-tools \
     && pip3 install --upgrade pip \
     && rm -rf /var/lib/apt/lists/*
 
@@ -68,7 +63,7 @@ RUN . /opt/ros/${ROS_DISTRO}/setup.sh && \
 RUN . /opt/ros/${ROS_DISTRO}/setup.sh && \
     colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-select liorf_localization
 
-# --- Copy in rest of custom ros2 packages and build them ---
+# --- Copy in other custom ros2 packages and build them ---
 COPY ros2_ws/src/emlid_gps ./src/emlid_gps
 COPY ros2_ws/src/emlid_rtk_color ./src/emlid_rtk_color
 COPY ros2_ws/src/topic_monitor ./src/topic_monitor
@@ -80,11 +75,6 @@ RUN cd src/emlid_gps/external/CppLinuxSerial && \
     make install
 RUN . /opt/ros/${ROS_DISTRO}/setup.sh && \
     colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-select emlid_gps emlid_rtk_color topic_monitor
-
-# RUN curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
-#     && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
-#     sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
-#     sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list && apt-get update && apt-get install -y nvidia-container-toolkit
 
 # --- Source ROS2 ---
 RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc && \
