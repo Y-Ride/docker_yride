@@ -331,7 +331,7 @@ class TopicMonitor : public rclcpp::Node
                         else
                         {
                             RCLCPP_INFO(this->get_logger(),
-                                        "Topic: %s - Timestamps appear synchronized with end time difference %.3f s\n",
+                                        "Topic: %s - Timestamps appear synchronized with end time difference \033[32m%.3f\033[0m s\n",
                                         info_ptr->topic_name.c_str(),
                                         time_diff);
                         }

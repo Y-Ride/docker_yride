@@ -29,4 +29,4 @@ ros2_ws/src/timestamps_to_txt/t*.txt
 *.pyc
 
 # Ignore docker compose computer specific files
-*.extra.yaml
+*compose.*.y*ml
