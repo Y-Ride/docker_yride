@@ -38,7 +38,7 @@ stop_flag_(false)
   } 
   catch (const std::exception &e) 
   {
-    RCLCPP_ERROR(this->get_logger(), "%s\nShutting Down", e.what());
+    RCLCPP_ERROR(this->get_logger(), "Couldn't open serial port: %s\nShutting Down", e.what());
     rclcpp::shutdown();
   }
 
@@ -54,6 +54,30 @@ EmlidGps::~EmlidGps(){
   serialPort.Close();
 }
 
+void EmlidGps::ResetSerialPort()
+{
+  bool is_reset = false;
+  
+  last_fix_status_change_time_ = this->now();
+  previous_fix_status_ = sensor_msgs::msg::NavSatStatus::STATUS_NO_FIX;
+  
+  while (!is_reset && rclcpp::ok())
+  {
+    try
+    {
+      serialPort.Close();
+      std::this_thread::sleep_for(std::chrono::seconds(2));
+      serialPort.Open();
+      is_reset = true;
+      RCLCPP_INFO(this->get_logger(), "Serial port re-opened successfully.");
+    }
+    catch (const std::exception &e)
+    {
+      RCLCPP_ERROR(this->get_logger(), "Failed to reopen serial port: %s\nReattempting to reset serial port...", e.what());
+    }
+  }
+}
+
 void EmlidGps::readLoop()
 {
   while (rclcpp::ok() && !stop_flag_)
@@ -62,6 +86,8 @@ void EmlidGps::readLoop()
     {
       std::string data = "";
       serialPort.Read(data);
+      // std::cout << data << std::endl; // Remove after testing
+
       if (!data.empty() && data[0] == '$')
       {
         RCLCPP_DEBUG(this->get_logger(), "Raw sentence: \n%s", data.c_str());
@@ -79,6 +105,7 @@ void EmlidGps::readLoop()
         while (end != std::string::npos)
         {
           std::string sentence = data.substr(start, end-start);
+          // std::cout << "Processing sentence: " << sentence << std::endl; // Remove after testing
           if (!sentence.empty() && sentence[0] == '$')
           {
             std_msgs::msg::String msg;
@@ -93,26 +120,34 @@ void EmlidGps::readLoop()
               fields.push_back(field);
             }
 
+            // std::cout << "Fields size: " << fields.size() << std::endl; // Remove after testing
+            // std::cout << "Fields parsed: ";
+            // for (const auto& f : fields)
+            // {
+            //   std::cout << f << " | ";
+            // }
+            // std::cout << std::endl; // Remove after testing
+
             switch (getNmeaType(fields[0]))
             {
               case NmeaType::GGA:
                 if (!EmlidGps::parseGGA(fields, fix_msg))
                 {
-                  RCLCPP_WARN(this->get_logger(), "Parsing of GGA sentence failed: %s", sentence.c_str());
+                  RCLCPP_DEBUG(this->get_logger(), "Parsing of GGA sentence failed: %s", sentence.c_str());
                   do_publish = false;
                 }
                 break;
               case NmeaType::RMC:
                 if (!EmlidGps::parseRMC(fields, gps_time))
                 {
-                  RCLCPP_WARN(this->get_logger(), "Parsing of RMC sentence failed: %s", sentence.c_str());
+                  RCLCPP_DEBUG(this->get_logger(), "Parsing of RMC sentence failed: %s", sentence.c_str());
                   do_publish = false;
                 }
                 break;
               case NmeaType::GST:
                 if (!EmlidGps::parseGST(fields, fix_msg))
                 {
-                  RCLCPP_WARN(this->get_logger(), "Parsing of GST sentence failed: %s", sentence.c_str());
+                  RCLCPP_DEBUG(this->get_logger(), "Parsing of GST sentence failed: %s", sentence.c_str());
                   do_publish = false;
                 }
                 break;
@@ -120,7 +155,7 @@ void EmlidGps::readLoop()
                 RCLCPP_DEBUG(this->get_logger(), "Got unknown/unimplemented NMEA type: %s", sentence.c_str());
                 break;
               default:
-                RCLCPP_WARN(this->get_logger(), "Unknown NMEA case");
+                RCLCPP_DEBUG(this->get_logger(), "Unknown NMEA case");
                 break;
               
             }
@@ -164,11 +199,24 @@ void EmlidGps::readLoop()
             path_.poses.clear();
           }
         }
-        
       }
-    } catch (const std::exception &e) 
+    }
+    catch (const std::invalid_argument &e)
     {
-      RCLCPP_WARN(this->get_logger(), "Serial read error: %s", e.what());
+      // This catches 'stod' conversion errors
+      RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5000,
+        "Data conversion error (GPS likely lost): %s", e.what());
+    } 
+    catch (const std::exception &e) 
+    {
+      // if (print_catch)
+      // {
+      //   RCLCPP_WARN(this->get_logger(), "Serial read error: %s", e.what());
+      //   print_catch = false;
+      // }
+      RCLCPP_ERROR(this->get_logger(), "Serial read error: %s. Attempting to reconnect...", e.what());
+      
+      EmlidGps::ResetSerialPort();
     }
   }
 }
@@ -207,18 +255,22 @@ double EmlidGps::convertNMEACoordinate(const std::string& nmea_coord, const std:
 
 bool EmlidGps::parseGGA(const std::vector<std::string>& fields, sensor_msgs::msg::NavSatFix& msg) 
 {
-
-  if (fields.size() < 10) return false;
+  bool return_value = true;
+  int fix_status = 0;
   
-  static int previous_fix_status_ = sensor_msgs::msg::NavSatStatus::STATUS_NO_FIX;
-  static rclcpp::Time last_fix_status_change_time_ = this->now();
+  if (fields.size() < 10 || fields[1].empty())
+  {
+    return_value = false;
+  }
+  else
+  {
+    msg.latitude = convertNMEACoordinate(fields[2], fields[3]);
+    msg.longitude = convertNMEACoordinate(fields[4], fields[5]);
+    msg.altitude = std::stod(fields[9]);
 
-  msg.latitude = convertNMEACoordinate(fields[2], fields[3]);
-  msg.longitude = convertNMEACoordinate(fields[4], fields[5]);
-  msg.altitude = std::stod(fields[9]);
+    fix_status = std::stod(fields[6]);
+  }
 
-  int fix_status = std::stod(fields[6]);
-  
   if (fix_status == 1 || fix_status == 2)
     msg.status.status = sensor_msgs::msg::NavSatStatus::STATUS_FIX;
   else if (fix_status == 4) // RTK fixed
@@ -228,11 +280,11 @@ bool EmlidGps::parseGGA(const std::vector<std::string>& fields, sensor_msgs::msg
   else
     msg.status.status = sensor_msgs::msg::NavSatStatus::STATUS_NO_FIX;
   
+  rclcpp::Time current_time = this->now();
+  rclcpp::Duration duration = current_time - last_fix_status_change_time_;
+  double seconds_since_last_change = duration.seconds();
   if (previous_fix_status_ != msg.status.status)
   {
-    rclcpp::Time current_time = this->now();
-    rclcpp::Duration duration = current_time - last_fix_status_change_time_;
-    double seconds_since_last_change = duration.seconds();
     last_fix_status_change_time_ = current_time;
     // RCLCPP_INFO(this->get_logger(), "Current time %f, last time %f, duration %f", current_time.seconds(), last_fix_status_change_time_.seconds(), duration.seconds());
 
@@ -243,10 +295,10 @@ bool EmlidGps::parseGGA(const std::vector<std::string>& fields, sensor_msgs::msg
     // Log the change with the time difference
     RCLCPP_INFO(
       this->get_logger(),
-      "Was %s for %.2fs. Changed GPS fix to -> %s",
-      (previous_fix_status_ == sensor_msgs::msg::NavSatStatus::STATUS_FIX) ? "SINGLE"
-      : (previous_fix_status_ == EmlidGps::STATUS_RTK_FIXED) ? "RTK FIX"
-      : (previous_fix_status_ == EmlidGps::STATUS_RTK_FLOAT) ? "RTK FLOAT"
+      "Was %s for \033[1m%.2fs\033[0m. Changed GPS fix to -> %s",
+      (previous_fix_status_ == sensor_msgs::msg::NavSatStatus::STATUS_FIX) ? "\033[1;31mSINGLE\033[0m"
+      : (previous_fix_status_ == EmlidGps::STATUS_RTK_FIXED) ? "\033[1;32mRTK FIX\033[0m"
+      : (previous_fix_status_ == EmlidGps::STATUS_RTK_FLOAT) ? "\033[1;33mRTK FLOAT\033[0m"
       : "No Fix",
       seconds_since_last_change,
       (msg.status.status == sensor_msgs::msg::NavSatStatus::STATUS_FIX) ? "\033[1;31mSINGLE\033[0m"
@@ -254,17 +306,30 @@ bool EmlidGps::parseGGA(const std::vector<std::string>& fields, sensor_msgs::msg
       : (msg.status.status == EmlidGps::STATUS_RTK_FLOAT) ? "\033[1;33mRTK FLOAT\033[0m"
       : "No Fix");
     }
+    else
+    {
+      std::cout << "Duration of "
+                << (msg.status.status == sensor_msgs::msg::NavSatStatus::STATUS_FIX ? "\033[1;31mSINGLE\033[0m"
+                    : (msg.status.status == EmlidGps::STATUS_RTK_FIXED ? "\033[1;32mRTK FIX\033[0m"
+                    : (msg.status.status == EmlidGps::STATUS_RTK_FLOAT ? "\033[1;33mRTK FLOAT\033[0m"
+                    : "No Fix")))
+                << ": " 
+                << std::fixed << std::setprecision(2)
+                << seconds_since_last_change 
+                << "\r"
+                << std::flush;
+    }
     previous_fix_status_ = msg.status.status;
 
   msg.status.service = sensor_msgs::msg::NavSatStatus::SERVICE_GPS;
   
-  return true;
+  return return_value;
 }
 
 bool EmlidGps::parseRMC(const std::vector<std::string>& fields, rclcpp::Time& ros_time_out) 
 {
 
-  if (fields.size() < 10 || fields[2] != "A") return false;
+  if (fields.size() < 10 || fields[1].empty() || fields[2] != "A") return false;
 
   std::string time_str = fields[1];   // e.g. "174628.80"
   std::string date_str = fields[9];   // e.g. "240625" (DDMMYY)
@@ -299,7 +364,7 @@ bool EmlidGps::parseRMC(const std::vector<std::string>& fields, rclcpp::Time& ro
 
 bool EmlidGps::parseGST(const std::vector<std::string>& fields, sensor_msgs::msg::NavSatFix& msg)
 {
-  if (fields.size() < 9) return false;
+  if (fields.size() < 9 || fields[1].empty()) return false;
 
   try 
   {
